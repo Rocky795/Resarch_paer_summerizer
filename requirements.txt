@@ -3,3 +3,5 @@ transformers
 sentencepiece
 pdfplumber
 tqdm
+streamlit
+gradio
