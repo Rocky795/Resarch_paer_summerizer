@@ -1,0 +1,145 @@
+JournalofMachineLearningResearch25(2024)1-91 Submitted4/19;Revised12/23;Published01/24
+On Truthing Issues in Supervised Classification∗
+Jonathan K. Su su@ll.mit.edu
+MIT Lincoln Laboratory
+244 Wood Street
+Lexington, MA 02421-6426, USA
+Editor: Shivani Agarwal, Francis Bach
+Abstract
+Ideal supervised classification assumes known correct labels, but various truthing issues
+can arise in practice: noisy labels; multiple, conflicting labels for a sample; missing labels;
+anddifferentlabelercombinationsfordifferentsamples. Previousworkintroducedanoisy-
+label model, which views the observed noisy labels as random variables conditioned on the
+unobservedcorrectlabels. Ithasmainlyfocusedonestimatingtheconditionaldistribution
+of the noisy labels and the class prior, as well as estimating the correct labels or training
+withnoisylabels. Inacomplementarymanner,giventheconditionaldistributionandclass
+prior,weapplyestimationtheorytoclassifiertesting,training,andcomparisonofdifferent
+combinations of labelers. First, for binary classification, we construct a testing model and
+derive approximate marginal posteriors for accuracy, precision, recall, probability of false
+alarm,andF-score,andjointposteriorsforROCandprecision-recallanalysis. Wepropose
+minimum mean-square error (MMSE) testing, which employs empirical Bayes algorithms
+to estimate the testing-model parameters and then computes optimal point estimates and
+credible regions for the metrics. We extend the approach to multi-class classification to
+obtainoptimalestimatesofaccuracyandindividualconfusion-matrixelements. Second,we
+presentaunifiedviewoftrainingthatcoversprobabilistic(i.e.,discriminativeorgenerative)
+andnon-probabilisticmodels. Forthe former, we adjustmaximum-likelihoodormaximum
+a posteriori training for truthing issues; for the latter, we propose MMSE training, which
+minimizes the MMSE estimate of the empirical risk. We also describe suboptimal training
+thatiscompatiblewithexistinginfrastructure. Third,weobservethatmutualinformation
+lets one express any labeler combination as an equivalent single labeler, implying that
+multiple mediocre labelers can be as informative as, or more informative than, a single
+expert labeler. Experiments demonstrate the effectiveness of the methods and confirm the
+implication.
+Keywords: supervised classification, truth errors, noisy labels, Bayesian estimation,
+empirical Bayes, mutual information, crowdsourcing
+∗. DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
+This material is based upon work supported by the Under Secretary of Defense for Research and
+Engineering under Air Force Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or
+recommendations expressed in this material are those of the author and do not necessarily reflect the
+views of the Under Secretary of Defense for Research and Engineering.
+(cid:13)c 2023 Massachusetts Institute of Technology.
+Subject to FAR52.227-11 Patent Rights - Ownership by the contractor (May 2014)
+Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013
+or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are
+definedbyDFARS252.227-7013orDFARS252.227-7014asdetailedabove. Useofthisworkotherthan
+as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
+(cid:13)c2024JonathanK.Su.
+License: CC-BY4.0,seehttps://creativecommons.org/licenses/by/4.0/. Attributionrequirementsareprovided
+athttp://jmlr.org/papers/v25/19-301.html.
+Su
+italicized because, in Section 5.1.2, we present a similar model for p(z|y;ψ) that includes
+sample difficulty and labeler fallibility; however, our purpose is not to estimate ψ but to
+demonstrate training and testing when ψ is already available.
+Northcutt et al. (2021a) took a different viewpoint and assumed the availability of
+an existing classifier, previously trained on an auxiliary data set with enough correctly-
+labeled samples to overcome the presence of some noisily-labeled ones. Given a feature
+vector, the existing classifier predicts class probabilities for all classes, unlike a human
+labeler who provides a noisy label indicating a single class. For a new data set with noisy
+labels, Northcutt et al. leveraged this property to estimate the joint distribution p(z,y) as
+well as p(z|y) and π. They used these estimates to identify samples in the new data set
+that were likely mislabeled and to correct or remove them. A new classifier can then be
+trained or tested using the corrected labels. This approach offers a different way to obtain a
+noisy-label model, and our methods can complement it by addressing samples whose noisy
+labels cannot be resolved.
+Some other authors perform joint learning of a noisy-label model and training of a
+predictive model. These references are discussed next.
+1.2.2 Training (and Joint Learning) with Truthing Issues
+Works on training with truthing issues are listed in Table 3 and reviewed here.
+Cid-Sueiro (2012) and Cid-Sueiro et al. (2014) took a Bayesian viewpoint and
+examined weak losses for training with partial labels, which are modeled slightly differently
+than the noisy labels considered here. The authors related the weak loss to an equivalent
+loss for correct labels and studied theoretical aspects of constructing a weak loss from a
+given equivalent loss. Their approach does not conform to the unified view of training
+that we offer in Section 3.2; it could be interpreted as the reverse of the minimum mean-
+square error training method proposed in Section 3.4.1. The two approaches are discussed
+in Section 3.6.1.
+Natarajan et al. (2013, 2018) took a classical (i.e., frequentist) view and trained
+binary classifiers on noisy labels from a single labeler by forming a proxy loss function for Z
+that is an unbiased estimator (in the classical sense) of the ideal loss function for y. Their
+approach does not fit into our unified view; further discussion appears in Section 3.6.2. van
+Rooyen and Williamson (2018)presentedanabstractframeworkforlearningwithnoisy
+labels, parts of which generalize the work by Cid-Sueiro (2012), Cid-Sueiro et al. (2014),
+and Natarajan et al. (2013, 2018).
+Ratner et al. (2016, 2017) proposed a technique for programmatically generating
+multiple noisy labels for many unlabeled samples and subsequently training discriminative
+classifierswiththenoisylabels. Tomodelp(z|y;ψ),theyintroducedgenerativemodelswith
+independent or dependent labelers, and they estimated ψ while assuming an equiprobable
+class prior. Training minimized the expected empirical risk with respect to p(z|y;ψ).
+Theremainingauthorsconsideredjointlearningandtrainingwithnoisylabels. Raykar
+et al. (2010)usedtheEMalgorithmtojointlyestimateψ, π, andθ andtrainalogisticre-
+gression binary classifier. They also presented a Bayesian form of the algorithm with priors
+on the labelers’ error probabilities and provided approximate posteriors of the error prob-
+6
+Su
+Reference Description Number Labeler Joint with Fits into
+of Classes Dependence noisy-label our
+model unified
+learning? view?
+Cid-Sueiro (2012); • Theoretical Binary or Not No No
+Cid-Sueiro et al. Bayesian view multiple applicable
+(2014) • Weak loss designed (Partial
+for partial labels labels)
+• Equivalent loss for
+correct labels
+Natarajan et al. • Classical or Binary Not No No
+(2013, 2018) frequentist view applicable
+• Proxy loss function (Single
+that is unbiased in labeler)
+classical sense
+van Rooyen and • Abstract framework Binary Not No No
+Williamson (2018) • Generalization of applicable
+Cid-Sueiro (2012); (Single
+Cid-Sueiro et al. labeler)
+(2014); Natarajan
+et al. (2013, 2018)
+Ratner et al. (2016, • Logistic regression Binary Independent No Yes
+2017) •Alsolongshort-term or dependent
+memory network
+• Programmatic noisy
+labeling
+• Minimization of
+expected empirical
+risk
+Raykar et al. (2010) • Binary logistic Binary or Independent Yes Yes
+regression as main multiple
+example
+• Also regression,
+ordinal regression
+• EM or Bayesian
+estimation
+Khetan et al. (2018) • Empirical risk Binary or Independent Yes Yes
+minimization multiple
+• Marginalization of
+loss function using
+correct-label posterior
+Sukhbaatar et al. • CNN Multiple Not Yes No
+(2015); Jindal et al. • Base network learns applicable
+(2016) p(y|x) (Single
+• Extra layer learns labeler)
+p(z|y)
+Tanno et al. (2019) • CNN Multiple Independent Yes No
+• Regularization of
+trace of labelers’
+confusion matrices
+Table 3: Related work on training with truthing issues.
+8

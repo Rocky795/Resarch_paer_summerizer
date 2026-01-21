@@ -1,0 +1,193 @@
+Su
+1. Introduction
+Supervised classification uses labeled data to train and test a predictive model or classifier,
+whichwillbeusedtopredictthelabelsofunlabeleddata. Thepredictivemodelisamapping
+g : X → Y, parameterized by θ, from a feature space X to a set Y = {0,1,...,C −1} of
+C mutually exclusive and exhaustive classes or labels. The input to the model is a feature
+vector x ∈ X, andtheoutputofthemodelisthepredicted label yˆ= g(x;θ) ∈ Y, whichmay
+or may not agree with the correct label y ∈ Y. A labeled sample (x,y) consists of a feature
+vector x and its corresponding correct label y, while an unlabeled sample is just a feature
+vector x. A set of N labeled samples is denoted as {x,y}, where x = (x ,...,x ) =
+1 N
+(x )N , y = (y )N , and for each i, x ∈ X, y ∈ Y, where y is the correct label associated
+i i=1 i i=1 i i i
+with x . The result of applying a learned model to each feature vector in x is the list of
+i
+corresponding predicted labels yˆ = (yˆ)N = (g(x ;θ))N .
+i i=1 i i=1
+Training learnsthemodelfromatrainingsetoflabeledsamples. Testing usesaseparate
+testingsetoflabeledsamples,appliesthelearnedmodeltoitsfeaturevectors,andcalculates
+metrics that quantify the agreement between each predicted label and the corresponding
+correct label. Our notation does not distinguish between the training and testing sets, since
+the intended set will be clear from context.
+1.1 Truthing Issues
+It is usually assumed that the correct labels are known during training and testing; we refer
+to this situation as the ideal case. However, this critical assumption is often violated in
+practice (see Everingham et al. (2006, p. 172), Fr´enay and Verleysen (2014), or Northcutt
+et al. (2021b), for example), which can degrade the trained model and produce misleading
+testing metrics. Deviation from the ideal case can invalidate many hours of hard work and
+computer processing, as well as make users and clients skeptical of the utility of a classifier
+or its performance.
+Consequently, substantialresourcesareoftendevotedtotruthing, theprocessoflabeling
+data as correctly as possible. We use the term labeler to mean an entity that assigns labels
+to samples; some authors use terms like “teacher“ or “annotator.” A labeler could be a
+human,asensor,alaboratorytest,orevenanotherclassifier. Despitealabeler’sbestefforts,
+errors can and do still occur. Humans make mistakes, become fatigued, and have varying
+amounts of expertise, attentiveness, and motivation; sensors are subject to noise, occlusion,
+and other degradations; laboratory test results are not always definitive; and classifiers are
+rarely perfect predictors. In addition, labeling via crowdsourcing means that more than one
+labeler could assign a label to the same feature vector x , and if the labels conflict, then at
+i
+least one of them must be incorrect.
+In short, a number of truthing issues can arise: truth errors, multiple labelers who
+provide conflicting labels for the same sample, missing labels, and different combinations of
+labelers for different samples. We introduce some notation here and include an example of
+it in Table 1. We assume there are T labelers, indexed from 1 to T, and we let T = {1, 2,
+..., T}. Let z ∈ {∅}∪Y, t ∈ T, denote the noisy label assigned to x by the tth labeler,
+i,t i
+where z = ∅ if no label was assigned. We require that at least one labeler assigns a label
+i,t
+to each sample; that is, z ∈ Y for some t ∈ T. Hence, a labeler can only assign one label
+i,t
+2
+Su
+Figure 24 shows ROC analysis plots for the held-out testing set. The results show that
+the classifier trained with the mediocre labelers’ noisy labels performs better than the one
+trained with the single good labeler’s noisy labels, which confirms the implication.
+Asanextremeexample,wesimulatedasingleexpertlabelerwithε(cid:48) = 0.01and399poor
+labelers, each with ε = 0.45, so I(Z;Y|ε(cid:48) = 0.01) = 0.863 bits and I(Z;Y|T = 399,ε =
+0.45) = 0.859 bits. The estimated P-R curve posteriors appear in Figure 25; when τ > 1,
+both classifiers predict yˆ = 0, ∀i, so recall is zero but precision is undefined, and no points
+i
+for rec = 0 are plotted. The curves indicate comparable performance and again confirm the
+implication.
+6. Summary, Conclusions, and Future Directions
+In supervised classification, a number of truthing issues may arise: noisy labels; missing
+labels;multiple,conflictinglabelsforthesamesample;anddifferentcombinationsoflabelers
+for different samples. This situation involves three components, each of which requires a
+model: truthingwarrantsanoisy-labelmodel,traininglearnsapredictivemodel,andtesting
+callsforatestingmodel. Wedidnotstudytheproblemofformulatingandlearninganoisy-
+label model, which is the subject of much of the related work. Instead, we concentrated on
+testingandtraining,andwebeganbyassumingthatagoodnoisy-labelmodelp(z|y,ψ)π(y)
+was available, which makes our work compatible with and complementary to the related
+work. Our methods support models with dependent labelers.
+6.1 Summary and Conclusions
+By applying principles from Bayesian estimation theory, we succeeded in obtaining some
+promising and insightful answers to the questions posed in the introduction.
+1. How can one test a classifier in the presence of truthing issues?
+Given noisy labels z, predicted labels yˆ, noisy-label model parameters ψ, and class
+prior π, we developed testing methods that are optimal: they estimate the metric
+RVsratherthanthecorrect-labelRVs, theyfullyexploitallavailableinformation, and
+they optimize a well-defined criterion (MMSE). Our approach is completely separate
+from training and applicable beyond the realm of machine learning. For example, it
+could be used to reconcile diagnoses made by clinicians or categorizations assigned by
+scientists.
+To arrive at the methods, we proposed a novel testing model (7), and we used it
+to derive approximate marginal posteriors for several scalar metrics, as well as joint
+posteriors for ROC and P-R analysis. We then introduced MMSE testing and de-
+veloped empirical Bayes algorithms (Algorithms 1 and 2) for iteratively finding the
+MMSE estimate of the testing-model parameters from {z,yˆ,ψ,π}. After estimating
+the parameters, we calculated Bayesian optimal estimates (MMSE or MAP point es-
+timates, or credible regions) of the metric RVs. Finally, we extended the approach to
+multi-class classification.
+In our experiments, MMSE testing provided excellent estimates of many binary-
+classification metrics. Their estimation errors were an order of magnitude smaller
+72
+Su
+F.2 MMSE Training
+For ideal training, rewrite the first term in (62) as the empirical risk (33) by setting s =
+g˜(x;θ) = 1/(1+e−x˜T i θ) and defining L(s,y) = −(1−y)log(1−s)−ylogs. Then
+(cid:18) (cid:19)
+∂ (cid:2) (cid:3) 1
+L(g˜(x;θ),y) = −y x˜(j). (64)
+∂θ 1+e−x˜Tθ
+j
+For the gradient, plugging this equation into (48) and (49) again yields (63).
+For MMSE training with truthing issues, we apply (40) and minimize
+N (cid:18)
+1 (cid:88) 1
+J (θ;x,z,ψ,π) = − p (0|z ;ψ )log
+MMSE N Y|Z i i 1+e+x˜T
+i
+θ
+i=1
+(cid:19) D
+1 λ (cid:88)
++p (1|z ;ψ )log + θ2.
+Y|Z i i 1+e−x˜T
+i
+θ 2N j
+j=1
+For the gradient, plugging (64) into (50) and simplifying yields
+N (cid:18) (cid:19)
+∂J MMSE 1 (cid:88) 1 1
+= p (0|z ;ψ ) −p (1|z ;ψ ) x˜ (j)
+∂θ
+j
+N Y|Z i i 1+e−x˜T
+i
+θ Y|Z i i 1+e+x˜T
+i
+θ i
+i=1
+λ
++ θ 1(j (cid:54)= 0), j = 0,1,...,D.
+j
+N
+References
+Joseph K. Blitzstein and Jessica Hwang. Introduction to Probability. CRC Press, Boca
+Raton, FL, USA, 2nd edition, 2019. doi: 10.1201/9780429428357.
+Steve Branson, Grant Van Horn, and Pietro Perona. Lean crowdsourcing: Com-
+bining humans and machines in an online system. In IEEE Computer Vision
+and Pattern Recognition (CVPR), pages 6109–6118, July 2017. doi: 10.1109/
+CVPR.2017.647. URL https://openaccess.thecvf.com/content_cvpr_2017/html/
+Branson_Lean_Crowdsourcing_Combining_CVPR_2017_paper.html.
+Leo Breiman. Statistical modeling: The two cultures. Statistical Science, 16(3):199–231,
+August 2001. doi: 10.1214/ss/1009213726.
+M. C. Burl, U. M. Fayyad, P. Perona, P. Smyth, and M. P. Burl. Automating the hunt for
+volcanoes on Venus. In IEEE Computer Vision and Pattern Recognition (CVPR), pages
+302–309, 1994. doi: 10.1109/CVPR.1994.323844.
+MarkJ.Carlotto. Effectoferrorsingroundtruthonclassificationaccuracy. Intl. J. Remote
+Sensing, 30(18):4831–4849, September 2009. doi: 10.1080/01431160802672864.
+George Casella. Illustrating empirical Bayes methods. Chemometrics and Intelligent Labo-
+ratory Systems, 16(2):107–125, October 1992. doi: 10.1016/0169-7439(92)80050-E.
+86
+Su
+Panagiotis G. Ipeirotis, Foster Provost, and Jing Wang. Quality management on Amazon
+MechanicalTurk. InACM Intl. Conf. Knowledge Discovery and Data Mining (SIGKDD),
+WorkshoponHumanComputation(HCOMP),pages64–67, 2010. doi: 10.1145/1837885.
+1837906.
+Ishan Jindal, Matthew Nokleby, and Xuewen Chen. Learning deep networks from noisy
+labels with dropout regularization. In IEEE Intl. Conf. Data Mining (ICDM), pages
+967–972. IEEE, 2016. doi: 10.1109/ICDM.2016.0121.
+Edward W. Kamen and Jonathan K. Su. Introduction to Optimal Estimation. Springer-
+Verlag, London, UK, 1999. doi: 10.1007/978-1-4471-0417-9.
+David R. Karger, Sewoong Oh, and Devavrat Shah. Budget-optimal task allocation for
+reliable crowdsourcing systems. Operations Research, 62(1):1–24, February 2014. doi:
+10.1287/opre.2013.1235.
+Steven M. Kay. Fundamentals of Statistical Signal Processing: Estimation Theory. Prentice
+Hall PTR, Upper Saddle River, NJ, USA, 1993.
+Steven M. Kay. Fundamentals of Statistical Signal Processing: Detection Theory. Prentice
+Hall PTR, Upper Saddle River, NJ, USA, 1998.
+Ashish Khetan, Zachary C. Lipton, and Anima Anandkumar. Learning from noisy singly-
+labeled data. In Intl. Conf. Learning Representations (ICLR), December 2018. doi:
+10.48550/arXiv.1712.04577. URL https://openreview.net/forum?id=H1sUHgb0Z.
+Daphne Koller and Nir Friedman. Probabilistic Graphical Models: Principles and Tech-
+niques. MIT Press, Cambridge, MA, USA, 2009.
+Chuck P. Lam and David G. Stork. Evaluating classifiers by means of test data with
+noisy labels. In Intl. Joint Conf. Artificial Intelligence (IJCAI), pages 513–518. Morgan
+Kaufmann, 2003. URL http://ijcai.org/Proceedings/03/Papers/076.pdf.
+Ga´bor Lugosi. Learning with an unreliable teacher. Pattern Recognition, 25(1):79–87,
+January 1992. doi: 10.1016/0031-3203(92)90008-7.
+George Marsaglia. Ratios of normal variables and ratios of sums of uniform variables. J.
+Amer. Statistical Assoc., 60(309):193–204, March 1965. doi: 10.2307/2283145.
+GeorgeMarsaglia. Ratiosofnormalvariables. J. Statistical Software, 16(4):1–10, May2006.
+doi: 10.18637/jss.v016.i04.
+NagarajanNatarajan,InderjitS.Dhillon,PradeepRavikumar,andAmbujTewari.Learning
+with noisy labels. In Neural Information Processing Systems (NeurIPS), pages 1196–
+1204.CurranAssociatesInc.,December2013. URLhttps://dl.acm.org/doi/10.5555/
+2999611.2999745.
+Nagarajan Natarajan, Inderjit S. Dhillon, Pradeep Ravikumar, and Ambuj Tewari. Cost-
+sensitive learning with noisy labels. J. Machine Learning Research (JMLR), 18(155):
+1–33, April 2018. URL https://jmlr.org/papers/v18/15-226.html.
+88

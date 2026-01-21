@@ -1,0 +1,4 @@
+                                                           
+A number of truthing issues may arise: noisy labels; missing labels; multiple,conflict
+We developed a novel testing model (7) for a well-defined criterion. We developed a novel testing model (7) for a well-defined criterion. We used a novel testing model (7) to define approximate marginal posteriors for scalar metrics, as well as joint posteriors for ROC and P-R analysis. We introduced MMSE testing and de- veloped empirical Bayes algorithms for iteratively finding the MMSE estimate of the testing-model parameters from z,y,
+Statistical modeling: The two cultures. Statistical Science, 16(3):199–231, August 2001. doi: 10.1214/ss/1009213726. M. C. Burl, U. M. Fayyad, P. Smyth, and M. P. Burl. Automating the hunt for volcanoes on Venus. In IEEE Computer Vision and Pattern Recognition (CVPR), pages 302–309, 1994. doi: 10.1109/CVPR.1994.323844. MarkJ.Carlotto. Effect

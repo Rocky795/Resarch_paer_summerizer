@@ -1,0 +1,3 @@
+A comprehensive study of the truthing issues in supervised classification.
+A new classifier is trained on noisy labels from a single labeler.
+z|y;                                                          

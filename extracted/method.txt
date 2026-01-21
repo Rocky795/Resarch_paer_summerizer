@@ -1,0 +1,2927 @@
+On Truthing Issues in Supervised Classification
+Labeler Index t
+1 2 3 4 5
+Sample Feature Correct Noisy
+Index Vector Label Labels z
+i
+i x y z z z z z
+i i i,1 i,2 i,3 i,4 i,5
+1 x 0 0 1 0 0 ∅
+1
+2 x 1 1 ∅ ∅ 1 ∅
+2
+3 x 0 0 0 0 0 0
+3
+4 x 1 1 1 0 0 1
+4
+5 x 0 0 ∅ ∅ 0 0
+5
+. . . .
+. . . .
+. . . .
+N x 0 0 0 ∅ 0 ∅
+N
+Table 1: Example of notation for binary classification and five labelers. This example cor-
+responds to the training example in Section 5.4.
+to a sample. Of course, z might be incorrect and differ from y . Denote the set of noisy
+i,t i
+labels for x by z = (z ) ; the noisy labels need not agree. Finally, let z = (z )N .
+i i i,t t∈T i i=1
+Anaturalapproach,introducedbyDawidandSkene(1979),istotreatthecorrectlabels
+andnoisylabelsasrandom variables (RVs). Weadoptthisviewpointandusecapitalization
+(e.g., Y) for an RV and lowercase (e.g., y) for its non-random counterpart. Hence, Y is
+i
+the correct-label RV for the ith sample, so Y = (Y )N is the list of correct-label RVs,
+i i=1
+and y is the list of correct labels themselves. Similarly, the feature-vector RVs are X
+i
+and X = (X )N , and their realizations are x and x. Also, Z , Z, Z = (Z ) ,
+i i=1 i i,t i i,t t∈T
+and Z = (Z )N indicate noisy-label RVs, while z , z, z , and z indicate their respective
+i i=1 i,t i
+realizations.
+We assume that the RVs associated with different samples are independent and iden-
+(cid:0) (cid:1)C−1
+tically distributed and that the correct-label RVs have class prior π = π(y) , where
+y=0
+π(y) = p(y) = Pr(Y = y). We further assume that the noisy-label RVs are conditionally
+dependentgiventhecorrect-labelRV,andwedenotethenoisy-label conditional distribution
+byp(z|y;ψ), whichisparameterizedbyψ, andwhereasemi-colonseparatesRVsfromnon-
+random parameters. We refer to p(z|y;ψ)π(y) as a noisy-label model. For the ith sample,
+the parameters are ψ . We assume that Z and Z follow the same conditional distribution
+i i j
+p(z|y;ψ) if ψ = ψ = ψ. At this stage, we let the parameters remain completely general.
+i j
+Also, let ψ = (ψ )N be the list of parameters for all samples.
+i i=1
+Much of the related work, described in Section 1.2, has focused on constructing a model
+for p(z|y;ψ), estimating the parameters ψ and class prior π, and estimating the correct-
+label RVs Y. This paper and the related work implicitly assume that p(z|y;ψ) (cid:54)= p(z;ψ)
+so that the noisy-label RVs provide some information about the correct-label RV. If z is
+non-informative, then none of these methods will be effective. Denote the estimated correct
+label for the ith sample as yˇ, and let yˇ = (yˇ)N .
+i i i=1
+In this paper, we seek answers to the following questions:
+3
+Su
+1. How can one test a classifier in the presence of truthing issues1?
+2. How can one train a classifier in the presence of truthing issues?
+3. How can one compare different combinations of labelers with different abilities?
+1.2 Related Work
+We organize the related work into noisy-label modeling and learning, training with truthing
+issues, testing with truthing issues, and comparing combinations of labelers.
+1.2.1 Noisy-Label Modeling and Learning
+Several authors have proposed noisy-label models p(z|y;ψ)π(y) and developed methods for
+learning them,2 i.e., estimating ψ and π. Often, they also estimated the correct-label RVs
+Y. Table 2 presents a summary. All but one set of authors allowed for multiple labelers.
+The table shows that most of them assumed that the noisy-label RVs are conditionally
+independent given the correct-label RV.
+DawidandSkene(1979)madeaninitial,influentialforayintothisarea. Theydidnot
+addresssupervisedclassification, buttheyconsideredtheproblemofcompilingobservations
+of patients from multiple clinicians who might disagree or make mistakes. In this context,
+they introduced the conditional-RV formulation that is now commonplace.
+When the correct labels are available, they showed that maximum-likelihood (ML) es-
+timation of ψ and π is straightforward. With the benefit of hindsight, it is clear that this
+situation amounts to learning a classifier from an auxiliary data set {z(cid:48),y(cid:48)} where the noisy
+labels z(cid:48) serve as the feature vector. For example, one might have a small auxiliary data
+set containing noisy labels from clinicians and correct labels from a separate, gold-standard
+laboratory test, and a large amount of data with only noisy labels.
+Moreimportant,whenthecorrectlabelsareunavailable,DawidandSkenedemonstrated
+the utility of the expectation-maximization (EM) algorithm of Dempster et al. (1977) for
+estimating ψ, π, and Y. Many other authors have built upon this work.
+Donmez et al. (2010) considered classification and regression, and they also proposed
+using the EM algorithm for learning the noisy-label model. They studied conditions under
+which ML estimates of the noisy-label model parameters are consistent. For classification,
+they showed that consistency holds under certain conditions, such as when the labelers are
+weak learners or better and the class prior π is not equiprobable.
+Whitehill et al. (2009)proposedamodelforp(z|y;ψ)thatconsiderssampledifficulty
+andlabelerexpertise. ABayesianextensionofthemodelallowedpriorsfortheseparameters.
+They used both the EM algorithm and a Bayesian version of it to estimate ψ and Y.
+Welinder and Perona (2010) and Welinder et al. (2010) expanded the model to
+include labeler bias and to support multi-class labels and continuously-valued annotations.
+1. Wetackletesting before training because ourtestingapproachapplies regardless ofhowa classifier was
+trained. Also,iftruthingissuesarepresent,thenthereislittlepointintrainingaclassifierifonecannot
+evaluate its performance.
+2. Onecouldproposelearningamodeloftheformp(z|x,y)p(x,y)orp(z|y,x)p(y|x)fromanauxiliaryset
+{x(cid:48),y(cid:48),z(cid:48)}. However,learningitwouldbeharderthanlearningapredictivemodelforp(x,y)orp(y|x),
+so if such a set were available, then one could just learn the predictive model from {x(cid:48),y(cid:48)}.
+4
+On Truthing Issues in Supervised Classification
+Reference Description Number Labeler
+of Classes Dependence
+Dawid and Skene • Seminal work Multiple Independent
+(1979) • ML estimation of noisy-label model, if correct
+labels available
+• EM estimation of noisy-label model and
+correct labels, if correct labels unavailable
+Donmez et al. (2010) • Also regression Multiple Independent
+• EM estimation of noisy-label models
+• Consistency conditions for ML estimates
+Whitehill et al. (2009) • Sample-difficulty and labeler-expertise model Binary Independent
+• EM or Bayesian estimation of noisy-label
+model
+Welinder and Perona Extension of Whitehill et al. (2009) to include Binary or Independent
+(2010); Welinder labeler bias, multiple classes, and Multiple
+et al. (2010) continuously-valued annotations
+Branson et al. (2017) • Extension of Welinder et al. (2010); Welinder Binary Independent
+and Perona (2010) to part-keypoint and
+bounding-box annotations
+• Sequential acquisition of noisy labels
+VanHornetal.(2018) Extension of Branson et al. (2017) to multiple Multiple Sequentially
+classes and sequentially dependent labelers dependent
+Karger et al. (2014) • Allocation of labelers to unlabeled samples Binary Independent
+• Iterative message passing
+Zhou et al. (2015) Minimax conditionl entropy principle Multiple Independent
+Platanios et al. (2016) • Hierarchical models Binary Independent
+• Gibbs sampling or dependent
+Northcutt et al. • Assume previously-trained classifier Multiple Not
+(2021a) • Estimate joint dist. p(z,y) on new data set applicable
+• Correct or remove mislabeled samples
+Table 2: Related work on noisy-label modeling and learning. References that jointly learn
+a noisy-label model and train a predictive model appear in Table 3.
+Bransonet al.(2017)extendedthemodelsbyWelinderandPeronaandbyWelinderetal.
+to include other forms of annotation. They also introduced an algorithm that sequentially
+acquiresmorenoisylabelsuntiltheriskoftheestimatedcorrectlabelfallsbelowathreshold.
+Van Horn et al. (2018) extended the work by Branson et al. to multi-class classification
+and sequentially dependent labelers.
+Kargeretal.(2014)consideredtheproblemofallocatinglabelerstounlabeledsamples
+and proposed a message-passing algorithm for estimating the correct labels. Zhou et al.
+(2015) included sample difficulty in their model of p(z|y;ψ) and estimated ψ, π, and
+Y by optimizing a minimax criterion on the conditional entropy of Z given Y. Platanios
+et al. (2016)proposedavarietyofgenerativemodelsforp(z|y;ψ), andtheyappliedGibbs
+sampling to infer π, ψ, and Y.
+None of these authors considered training or testing, and they used the known correct
+labels to compute estimation errors in their experiments. For our purposes, these works
+offer noisy-label models that could be learned—even without correct labels—and used with
+our training and testing methods. The model introduced by Whitehill et al. (2009) is
+5
+On Truthing Issues in Supervised Classification
+abilities, and they extended the approach to multi-class classification, ordinal regression,
+and regression.
+Khetan et al. (2018)presentedaversionoftheEMalgorithmthatalternatesbetween
+training a binary classifier with z and the current estimates of ψ and π and then updating
+the estimates of ψ and π using the current predictions. They weight the training loss
+function using the correct-label posterior for each possible correct-label value, effectively
+marginalizing out the correct-label RV.
+To train a convolutional neural network (CNN) on noisy labels from a single labeler
+and estimate p(z|y), Sukhbaatar et al. (2015) and Jindal et al. (2016) appended
+an additional layer to the softmax output of a base network. During training, the base
+network learns to predict the unknown correct labels while the additional layer estimates
+p(z|y) and predicts the noisy label from the output of the base network. Following training,
+the additional layer can be excised and the base network used for prediction. This training
+method lies outside our unified view of training and is discussed in Section 3.6.3.
+Tanno et al. (2019) jointly trained a CNN and estimated the confusion matrices
+for multiple independent labelers. They used the confusion matrices to convert the CNN
+outputsintopredictionsofthenoisylabels,whichissimilartotheworkbySukhbaataretal.
+(2015). Notably, Tanno et al. introduced a trace-regularization term, which minimizes the
+traces of the confusion matrices and, under certain conditions, ensures proper estimation.
+The authors compared their method to several other methods, including those of Raykar
+et al. (2010), Khetan et al. (2018), and Sukhbaatar et al. (2015). This approach does not
+fit our unified view of training, and further discussion appears in Section 3.6.4
+All of these authors used the correct labels during testing or other experimental eval-
+uations; they did not consider testing with truthing issues. As Table 3 shows, many of
+them do not consider multiple, possibly dependent labelers, which our work allows. Some
+of them jointly learn a noisy-label model and a predictive model, which we do not consider.
+A number of these works fit within our unified view of training (Section 3). The table
+italicizes parts of Ratner et al. (2016, 2017) and Khetan et al. (2018) that are consistent
+with our use of minimum mean-square error estimation of the empirical risk (Section 3.4.1).
+In the work of Raykar et al. (2010), logistic regression is italicized because we also use it as
+an illustrative example (Section 5.4).
+1.2.3 Testing with Truthing Issues
+As noted above, all of the related work on training used a reserved set of correct labels for
+testing. Related work on testing with truthing issues appears in Table 4.
+Smyth et al. (1994) considered testing with noisy labels assigned by a scientist or
+classifier to synthetic aperture imagery of the planet Venus to indicate the presence or
+absence of types of volcanoes. Clearly, absolute ground truth is unavailable in this case. To
+test an individual scientist’s predicted labels, the authors used the EM algorithm proposed
+by Dawid and Skene (1979) with the noisy labels from all other scientists to estimate the
+correct labels, which were then treated as if correct. A classifier was also trained using
+consensus labels from two scientists (Burl et al., 1994). It was tested by comparing its
+predictions to the estimated correct labels from EM using all scientists’ noisy labels.
+7
+On Truthing Issues in Supervised Classification
+Reference Description Number Labeler
+of Classes Dependence
+Smyth et al. (1994) • Comparison of one labeler’s noisy labels with Multiple, Independent
+estimated correct labels obtained by applying reduced
+EM to other labelers’ noisy labels to binary
+• Multi-class labels (volcano type or
+non-volcano) reduced to binary labels (volcano
+or non-volcano)
+Lam and Stork (2003) • Effect of noisy labels on probability of error Multiple, Not
+• Variance of estimated probability of error as a reduced applicable
+function of labeler error probability, number of to binary (Single
+samples labeler)
+Carlotto (2009) • Study of the effect of noisy labels on accuracy Multiple Not
+• Relationship between accuracies calculated on applicable
+correct labels and on noisy labels (Single
+• Rough estimate of ideal accuracy labeler)
+Holodnaketal.(2018) Empirical study of methods for estimating Multiple Independent
+accuracy from noisy labels or dependent
+Table 4: Related work on testing with truthing issues.
+For binary classification, Lam and Stork (2003) related the ideal probability of error
+Pr(yˆ(cid:54)= y) = 1−accuracy to a labeler’s error probability ε = Pr(z (cid:54)= y) and the classifier’s
+apparent probability of error Pr(yˆ(cid:54)= z). They provided an estimate of Pr(yˆ(cid:54)= y) given an
+assumed value of ε, and they examined the variance of this estimate as a function of ε and
+the number of samples N.
+Carlotto(2009)analyzedhowmeasuredaccuracyisaffectedbytrutherrorsforasingle
+labeler. Carlotto obtained an expression that relates ideal accuracy to accuracy calculated
+against noisy labels and suggested a rough estimate of accuracy when the labeler’s error
+probability is known.
+Holodnak et al. (2018) conducted an empirical study with real and simulated data
+to compare a variety of techniques for estimating the accuracy of a classifier from noisy
+labels. They introduced two models that incorporate dependencies between the labelers or
+noisy-labelRVs, andtheydemonstratedthatestimationtechniquesthatassumeconditional
+independence provide less reliable estimates as labeler dependence increases.
+In a survey paper on classification with label noise (Fr´enay and Verleysen, 2014, p. 862),
+the authors remark, “a problem that is seldom mentioned in the literature is that model
+validation can be difficult in the presence of label noise.” Indeed, the number of references
+on testing is considerably smaller than that on learning or training, and such work has
+mainly examined accuracy. Nevertheless, the above works reflect the main approaches:
+Calculate estimated correct labels yˇ and use them as the reference; estimate the ideal
+accuracy in some way; and comparative studies. Our work includes many common testing
+metrics, including accuracy, precision, recall or probability of detection, and probability of
+false alarm. We focus on estimating the testing metrics rather than the correct labels, and
+wedevelopalgorithmsforcomputingBayesianoptimalestimatesofscalarandjointmetrics.
+Our experiments use conditionally independent labelers for implementational convenience,
+but our approaches accommodate noisy-label models with conditionally dependent labelers.
+9
+Su
+1.2.4 Comparing Combinations of Labelers
+Regarding the comparison of different combinations of labelers, we have found one rather
+distantly-related publication.
+For binary classification and a single labeler, Lugosi (1992) viewed the correct-label
+RV and noisy-label RV as the respective input and output of a communications channel.
+Lugosi examined purely theoretical aspects of the effects of noisy labels on accuracy if a
+classifier uses the maximum a posteriori or nearest-neighbor decision rule.
+In Section 4, we make the channel analogy for one or more labelers, but we proceed
+in a different direction. We suggest that mutual information can be used to compare
+combinations of labelers, which implies that the information conveyed by multiple mediocre
+labelers can equal or exceed that provided by a single expert labeler.
+1.3 Supervised Classification and Estimation Theory
+This work applies estimation theory to supervised classification with truthing issues, and
+Figure 1 presents conceptual diagrams for these two fields. The diagrams look similar but
+differ in a fundamental way: In supervised classification, the actual process is unknown,
+while in estimation theory, the actual variable is unknown. Supervised classification is
+concerned with finding a good predictive model that generalizes to future, out-of-sample
+realizations from an unknown process, given a set of labeled samples from the process and
+a family of models. In this work, estimation theory is concerned with making a good guess
+at the current, in-sample value of an unobserved variable, given noisy measurements and a
+model for the measurement process.
+Thesefieldsalsousesimilartermsandobjectives. Supervisedclassificationlearnsmodel
+parameters θ, estimation theory finds an estimate yˆ or estimator Yˆ, and both fields seek
+an answer that is best according to some criterion. We present a few examples. In these
+examples, the criterion is essentially the same; the differences lie in the components that
+are assumed to be known, the solution space, and the optimization methods.
+First, both fields employ ML estimation: classification selects non-random parameters
+θ to maximize p(y|x;θ) or p(y,x;θ), and estimation chooses yˆ to maximize p (z|yˆ).
+Z|Y
+Second, when classification treats the model parameters as RVs Θ with prior p(θ), it
+usesthemaximumaposteriori (MAP)criterionandchoosesθtomaximizep(θ|y,x). When
+estimation adopts the MAP criterion, it selects yˆ= argmax p(y|z).
+y
+Third, classification may minimize the average square loss N−1(cid:80)N (y − g(x ;θ))2,
+i=1 i i
+while estimation may minimize the mean-square error (MSE) E[(Y −h(Z))2]. We make
+repeateduseofminimum mean-square error (MMSE)estimation,whichseekstheestimator
+h(Z) that minimizes the MSE. A convenient standard result (see Appendix C) is that the
+MMSE estimator is the conditional mean of Y given Z:
+hMMSE(Z) = argminE[(Y −h(Z))2] = E[Y|Z]. (1)
+h
+Finally,classificationmayminimizetheaveragezero-onelossN−1(cid:80)N 1(y (cid:54)= g(x ;θ)),
+i=1 i i
+where 1(w) is the indicator function: 1(w) = 0 if w is false, and 1(w) = 1 if w is true.
+Likewise,estimationmayadopttheminimum probability-of-error (MPE)criterionandmin-
+imize E[1(Y (cid:54)= h(Z))], the probability of error. Another standard result from estimation
+10
+Su
+to take this viewpoint and pursue its possibilities so extensively. We concentrate on train-
+ing and testing, and we start with the assumption that a noisy-label model p(z|y,ψ)π(y)
+is available, so this work complements much of the related work. The Bayesian approach
+naturally allows for multiple labelers, different combinations of labelers for each sample,
+and missing and/or conflicting noisy labels. It also supports noisy-label models with con-
+ditionally dependent labelers.3
+In this work, we say that an estimator is optimal only if it meets three requirements: it
+employsanappropriateestimand,itfullyexploitsallavailableinformation,anditminimizes
+awell-definedpenaltycriterion(ormaximizesawell-definedutilitycriterion). Anestimator
+that fails any of these requirements is considered suboptimal.
+Ourtechnicalcontributionsconsistoftestingandtrainingapproachesthatareoptimalin
+thisstrictsense. Ouroptimaltestingapproachfocusesonestimatingthemetrics,introduces
+atestingmodelthatenablesthoroughexploitationoftheavailableinformation,andemploys
+theMMSEcriterion. Incontrast,somesuboptimalmethodsomitestimationtheoryentirely,
+othersestimatethecorrectlabelsinsteadofthemetrics,andstillothersomitatestingmodel
+and fail to take full advantage of the available information.
+Our optimal training methods select an appropriate likelihood function, posterior, or
+risk that is faithful to the original objective from ideal training; they use the noisy-label
+model to exploit the available information completely; and they apply the ML, MAP, or
+MMSEcriterion. Somesuboptimalmethodsignoreestimationtheory, whileothersestimate
+the correct labels rather than the risk.
+Our proposed methods never estimate the correct labels because, in our view, they are
+not the right estimand. This viewpoint marks another novel conceptual contribution: Our
+conscious choice to refrain from estimating the correct labels. We deliberately avoid
+making hard decisions about the unobserved correct labels because doing so would produce
+errors that would propagate into training and testing. In this way, our work differs from
+existing, suboptimal approaches that estimate the correct labels and then proceed as if the
+estimated labels were correct.
+1. How can one test a classifier in the presence of truthing issues?
+ThisquestionisdeeplyinvestigatedinSection2. For binary classification, wepropose
+a testing model for the noisy and predicted labels (Section 2.1, Figure 2). We then
+derive the estimation-theoretic testing methods as follows:
+(a) We express various metrics in terms of two common RVs that are independent
+and approximately normally distributed (Section 2.2).
+(b) We derive approximate marginal posteriors for accuracy, precision, recall
+or probability of detection, probability of false alarm, and F-score
+and the approximate joint posteriors for probability of detection and
+probability of false alarm as well as for precision and recall (Section 2.3).
+(c) We propose MMSE testing and develop empirical Bayes algorithms for
+estimating the testing-model parameters via iterative MMSE estimation
+3. Foreaseofimplementation,oursimulationsandexperimentsemployconditionallyindependentlabelers,
+but the derivations and algorithms do not.
+12
+On Truthing Issues in Supervised Classification
+(Algorithms1and2,Figure3),andwediscusstheirrelationtotheEMalgorithm
+and convergence (Section 2.4),
+(d) We explain how to calculate Bayesian optimal estimates (MMSE, MAP, and
+credible regions) of the metrics from the estimated testing-model parameters
+and posteriors (Section 2.5).
+We also describe some alternative testing approaches (Section 2.6), such as MPE or
+MAP estimation of the correct labels (Section 2.6.1, Algorithm 3) and fully Bayesian
+estimation (Section 2.6.2).
+For multi-class classification (Section 2.7), we extend the testing model (Sec-
+tion 2.7.1), provide another empirical Bayes algorithm for MMSE testing (Al-
+gorithm 4, Figure 4), and derive approximate posteriors for accuracy and indi-
+vidual elements of the confusion matrix (Section 2.7.2).
+2. How can one train a classifier in the presence of truthing issues?
+We consider this question in Section 3. We restate the assumption of independent
+samples (Section 3.1), and we present a unified view of training that encompasses
+and organizes some of the related work (Section 3.2).
+For probabilistic (e.g., discriminative or generative) models, we derive the likelihood
+function or posterior of the predictive model parameters for truthing issues
+suchthattheoriginal,idealtrainingprinciple(MLorMAP)ispreserved(Section3.3).
+For non-probabilistic models (Section3.4),whicharetrainedbyminimizingtheempir-
+icalrisk,weproposeMMSE training, which minimizes the MMSE estimate of
+theempiricalrisk,andwedemonstratethatthisapproachleadstothesametraining
+objective proposed by some related work (Section 3.4.1). We review properties associ-
+atedwithMMSEestimation(Section3.4.2),mentionitsconvenientformforgradient
+calculation (Section 3.4.3), and consider some special cases (Section 3.4.4). We pro-
+vide a basic condition for consistency of the MMSE estimator (Section 3.4.5).
+Next, we mention some aspects of MMSE training that make it more appealing than
+ML and MAP training (Section 3.5). We also discuss some alternative training ap-
+proachesthatdonotfitintotheunifiedview(Section3.6). Finally,wedescribewaysto
+do training with infrastructure that was not designed for truthing issues (Section 3.7).
+3. How can one compare different combinations of labelers with different abilities?
+This question is briefly studied in Section 4. We make a simple analogy between the
+noisy-label model and a communications channel, which suggests mutual information
+as a basis for comparing combinations of labelers. We focus on the binary symmetric
+broadcast channel (Section 4.1), and we suggest expressing the mutual information
+for a set of labelers in terms of that for a single equivalent labeler (Section 4.2).
+We observe that, in theory, multiple mediocre labelers can be as informative
+as—or more informative than—a single expert labeler (Section 4.3).
+Experimental results appear in Section 5. We relied on simulation to generate many of
+the correct, noisy, and predicted labels (Section 5.1). We simulated correct and predicted
+13
+Su
+Abbreviation Expansion
+BSBC binary symmetric broadcast channel
+BSC binary symmetric channel
+CLT central limit theorem
+CNN convolutional neural network
+EM expectation-maximization
+ERM empirical risk minimization
+MAC moment-approximation condition
+MAD maximum absolute difference
+MAP maximum a posteriori
+ML maximum likelihood
+MMSE minimum mean-square error
+MPE minimum probability-of-error
+MSE mean-square error
+OP operating point
+P-R precision-recall
+ROC receiver operating characteristic
+RV random variable
+Table 5: List of abbreviations.
+labelsinastraightforwardmanner(Section5.1.1), andweemployedaparticularnoisy-label
+model (Section 5.1.2) that is similar to the one by Whitehill et al. (2009). For testing, we
+review results for several experiments on binary classification (Section 5.2), and we report
+on one experiment on multi-class classification (Section 5.3). For training, we provide an
+example involving binary logistic regression (Section 5.4). For the comparison of labelers,
+we show experiments that use the proposed training and testing methods to verify the
+possibility of equivalent mutual information (Section 5.5).
+Section 6 provides a summary and conclusions (Section 6.1), a workflow for super-
+vised classification with truthing issues (Section 6.2), and suggested future directions (Sec-
+tion6.3). Severalappendices arealsoincluded. AppendixAderivestestingmetricsinterms
+of the common RVs from Section 2.2. Appendix B summarizes results on ratios of jointly
+normal RVs; they are useful for calculating posteriors of scalar metrics. Appendices C
+and D review MMSE, MPE, and MAP estimation. Appendix E provides derivations for
+the training approaches in Sections 3.3 and 3.4. Appendix F gives details for the logistic
+regression training example in Section 5.4.
+2. Testing with Truthing Issues: Grading with Dirty Answer Keys
+We cover testing before training because the results and methods presented here apply
+regardless of how a classifier was trained. They can be employed even if training did not
+consider truthing issues. Additionally, if one needs to train a model with truthing issues,
+then one very likely needs to test the trained model with truthing issues, too. One might
+be reluctant to embark on training if one suspects that truthing issues will invalidate the
+testing metrics. This section provides reassurance that reliable testing is possible.
+Conventional testing calculates metrics over an ideal testing set {yˆ,y} to measure the
+(dis)agreementbetweenthepredictedlabelsyˆ andthecorrectlabelsy. Inmachinelearning,
+14
+Su
+yˆ is obtained by applying the learned model g to each feature vector x ∈ x. However,
+i
+testing does not actually involve the feature vectors x, so the results of this section apply to
+problemsoutsideofmachinelearning,suchasreconcilingobservationsbymultipleclinicians
+(for examples, see Dawid and Skene, 1979; Raykar et al., 2010).
+With truthing issues, testing must work with the testing set {yˆ,z,ψ,π} instead of
+{yˆ,y}. The metrics are functions of the correct-label RVs, which are unobserved, so the
+metrics are RVs whose values remain uncertain. Wethereforetreattestingasanestimation
+problem: we want to know the in-sample values of the metrics on the testing set. We seek
+the posteriors of the metric RVs, conditioned on yˆ and z. Optimal estimates or credible
+regions for the metric RVs can then be calculated from the posteriors.
+Our approach exploits all available information, including the predicted labels yˆ. The
+problem is analogous to grading a multiple-choice quiz using answer keys from one or more
+teachingassistantswhohavepoorhandwriting. Theanswerkeysprovideinformationabout
+the correct answers, but the student’s answers do, too. We can obtain the best estimate
+of the grade by consulting the student’s answers along with the answer keys, rather than
+relying on the answer keys alone.
+Mostofthissectioncoversbinaryclassification;Section2.7discussesextensionstomulti-
+class classification. For binary classification, we consider several common scalar metrics:
+accuracy, precision, recall or probability of detection,4 probability of false alarm,5 and F-
+score. Each of these metrics takes on values in [0,1]. For probability of false alarm, smaller
+values indicate better performance; for the other metrics, larger values correspond to better
+performance. Table 8 gives the empirical forms for these metrics, denoted as acc, prec,
+p or rec, p , and Femp, respectively. We also consider two common joint metrics: the
+D FA β
+receiver operating characteristic (ROC) and precision-recall (P-R) operating points, namely
+(p ,p ) and (prec,rec). The empirical metrics are used in the ideal case when {yˆ,y} is
+D FA
+available. The corresponding RV forms are ACC, PREC, P or REC, P , F , as well
+D FA β
+as (P ,P ) and (PREC,REC). We overload the lowercase symbols to mean either an
+D FA
+empirical metric or a realization of a metric RV.
+2.1 Testing Assumptions
+In ideal testing, the metrics do not involve the feature vectors, so we eliminate X and x
+from consideration. If we had a good testing model for p(yˆ,z|y), then we could use it to
+estimate the metric RVs. One might propose learning it from an auxiliary set {yˆ(cid:48),y(cid:48),z(cid:48)},
+but if such a set were available, then one could just do ideal testing with {yˆ(cid:48),y(cid:48)}.6
+Instead, we must devise a model for p(yˆ,z|y) and estimate its parameters from {yˆ,z,ψ,
+π}, with no prospect of learning them from auxiliary data. We tackle this problem by
+applying techniques from estimation theory rather than machine learning.
+We state our assumptions here, and Figure 2 shows the graphical model depicting them.
+We assume that yˆ, z, ψ, and π are available. We let Nˆ denote the number of times that
+1
+yˆ = 1; it is immediately available from yˆ. We further assume that the noisy-label RVs Z
+i i
+4. Recall, probability of detection, sensitivity, and true positive rate are equivalent terms.
+5. Probability of false alarm is equivalent to (1−specificity) and false positive rate.
+6. Wehavechosentoomitanydependenceonthefeaturevectors. Ifoneweretoproposelearningatesting
+model such as p(yˆ,z|x,y)p(x,y) from {x(cid:48),yˆ(cid:48),y(cid:48),z(cid:48)}, then a similar contradiction would arise.
+16
+On Truthing Issues in Supervised Classification
+Empirical Form Random-Variable Form
+Metric
+Symbol Expression Symbol Expression
+no. of times yˆ =y Nˆ
+Accuracy acc i i ACC U −V − 1 +1
+N N
+no. of times yˆ =1 and y =1 N
+Precision prec i i PREC U
+no. of times yˆ
+i
+=1 Nˆ
+1
+Prob. of
+no. of times yˆ =1 and y =1 U
+Detection, p D ,rec no. of tim i es y =1 i P D ,REC U +V
+Recall i
+Prob. of False p no. of times yˆ i =1 and y i =0 P Nˆ 1 /N −U
+Alarm FA no. of times y =0 FA 1−(U +V)
+i
+prec·rec (1+β2)U
+F-Score (β >0) Femp (1+β2) F
+β β2prec+rec β β2(U +V)+Nˆ /N
+1
+Table 8: Binary-classification metrics: Empirical forms and RV forms in terms of the com-
+mon RVs U and V from (8) and (9).
+Figure 2: Graphicalmodelfortestingapproach. Smallrectanglesindicatenon-randomvari-
+ables; circles indicate RVs. Shading indicates a variable that is fully observed.
+Large rectangles indicate N independent instances of the enclosed variables in-
+dexed by i.
+have conditional distribution p(z |y ;ψ ) and do not depend on the predicted label. As is
+i i i
+common practice, we also assume independent samples, so p(z|y;ψ) =
+(cid:81)N
+p(z |y ;ψ ).
+i=1 i i i
+Next, we observe that accuracy, precision, and F-score can each be written solely in
+termsoftheclassprior,probabilityofdetection,andprobabilityoffalsealarm. Forexample,
+acc = π(0)(1−p )+π(1)p , and prec = π(1)p /(π(0)p +π(1)p ). Consequently, we
+FA D D FA D
+introduce the ROC operating-point (OP) parameters (p˜ ,p˜ ), which suffice to determine
+D FA
+the other metrics because the class prior is assumed known. The OP parameters represent
+the anticipated performance on the testing set before Yˆ and Z are observed.
+We then treat each predicted label yˆ as a realization of a predicted-label RV Yˆ condi-
+i i
+tioned on the correct-label RV Y and (p˜ ,p˜ ). The predicted-label conditional distribution
+i D FA
+17
+Su
+is simply
+p (0|0;p˜ ,p˜ ) = 1−p˜ , (3)
+Yˆ i|Yi D FA FA
+p (1|0;p˜ ,p˜ ) = p˜ , (4)
+Yˆ i|Yi D FA FA
+p (0|1;p˜ ,p˜ ) = 1−p˜ , (5)
+Yˆ i|Yi D FA D
+p (1|1;p˜ ,p˜ ) = p˜ . (6)
+Yˆ i|Yi D FA D
+The assumption of independent samples means p(yˆ|y;p˜ ,p˜ ) =
+(cid:81)N
+p(yˆ|y ;p˜ ,p˜ ).
+D FA i=1 i i D FA
+Ourfinalassumptionisthat, givenY , theRVsYˆ andZ areconditionallyindependent,
+i i i
+where (p˜ ,p˜ ) and ψ only influence Yˆ and Z , respectively. This assumption may be a
+D FA i i i
+strongone, butitreflectsthetypicalcaseinwhichYˆ isgeneratedwithoutaccesstoZ . For
+i i
+example, Yˆ could be the output of a predictive model whose only input is X , or Yˆ could
+i i i
+be a diagnosis made by a clinician who has not seen the diagnoses from other clinicians.
+Therefore, our testing model is
+p(yˆ,z |y ;ψ ,p˜ ,p˜ ) = p(yˆ|y ;p˜ ,p˜ )p(z |y ;ψ ). (7)
+i i i i D FA i i D FA i i i
+We excluded X , so Y is the only RV that can link Z and Yˆ, and the model includes
+i i i i
+such a connection. The model is parsimonious, having just two parameters. As explained
+at the top of this section, they will not be determined via supervised learning. Section 2.4
+presents iterative methods for estimating them from {yˆ,z,ψ,π}.
+2.2 Metric RVs in Terms of Common RVs
+Here we demonstrate that each metric RV can be written in terms of two RVs that are
+independent and approximately normal.
+2.2.1 Metric RVs in Terms of Common RVs
+We begin by considering a single metric, namely probability of detection. Given truthing
+issues, it becomes an RV conditioned on yˆ, z, ψ, and (p˜ ,p˜ ), which we write as
+D FA
+1 (cid:80)N 1(yˆ = 1 and Y = 1)
+P = N i=1 i i .
+D 1 (cid:80)N 1(Y = 1)
+N i=1 i
+In this expression, the predicted label is shown in lowercase because it is observed, and the
+correct label is capitalized because it is an unobserved RV.
+We define the RVs U and V, conditioned on {yˆ,z,ψ,p˜ ,p˜ }, as follows:
+D FA
+N
+1 (cid:88)
+U = 1(yˆ = 1 and Y = 1)
+i i
+N
+i=1
+1 (cid:88)
+= 1(Y = 1), (8)
+i
+N
+i:yˆi=1
+18
+Su
+For P-R analysis, PREC and REC are also functions of U and V. We apply the
+transformation of functions of RVs to obtain the joint posterior of (PREC,REC):
+(cid:32) (cid:33)2
+Nˆ prec 1
+1
+p(prec,rec|yˆ,z;ψ,p˜ ,p˜ ) ≈
+D FA N rec2 2πσ σ
+U V
+(cid:34)
+1
+(cid:32)(cid:0)Nˆ
+1prec −µ
+(cid:1)2 (cid:0)Nˆ
+1prec
+(cid:0)1−rec(cid:1)
+−µ
+(cid:1)2(cid:33)(cid:35)
+·exp − N U + N rec V ,
+2 σ2 σ2
+U V
+0 < rec ≤ 1,0 ≤ prec ≤ 1, (18)
+with the moments of U and V computed from (11)–(16). This distribution is also non-
+Gaussian. The chance line in P-R space is prec = π(1) (see Saito and Rehmsmeier, 2015),
+anditposesnodifficulties. L’Hˆopital’srulecanbeappliedtoshowthatlim p(prec,rec|
+rec→0
+yˆ,z;ψ,p˜ ,p˜ ) = 0, so this expression is well-defined over the entire unit square.
+D FA
+2.3.3 Posteriors via Sampling
+We can also use sampling to approximate the posteriors. We generate M length-N realiza-
+tions {y(m)}M of the correct-label RVs Y. For each realization y(m), each y (m) is drawn
+m=1 i
+B (cid:0) p (1|yˆ,z ;ψ ,p˜ ,p˜ ) (cid:1) using (10). For each y(m), we compute the desired empiri-
+Y|Yˆ i,Zi i i i D FA
+cal metric (scalar or joint), which yields M realizations of the metric RV. The approximate
+posterior can then be computed as a one-dimensional or two-dimensional histogram.
+2.4 Empirical Bayes Estimation of Operating-Point Parameters (MMSE
+Testing)
+The validity of the posteriors depends on how well we can estimate the moments of U and
+V, which in turn depend upon the OP parameters (p˜ ,p˜ ). We present two iterative algo-
+D FA
+rithmsforfindingtheMMSEestimateoftheOPparameters, sowerefertothisapproachas
+MMSE testing. The algorithms belong to the class of empirical Bayes estimators. Standard
+Bayesian estimation handles unknown nuisance variables by specifying a prior for them and
+marginalizing them out to obtain the posterior estimate of the estimand. In contrast, em-
+pirical Bayes estimation does not assume a prior;8 it instead consults the available data to
+estimate nuisance variables (Casella, 1992), often using MAP or ML estimation. It alter-
+nates between estimating the nuisance variables and the estimand. This iterative process
+successivelyimproveseachestimateandissimilarinspirittotheEMalgorithmofDempster
+et al. (1977). In the proposed algorithms, the OP parameters are the nuisance variables,
+the estimand consists of the probability-of-detection and probability-of-false alarm RVs,
+and MMSE estimation is employed. Section 2.4.4 explores the relationship between these
+algorithms and the EM algorithm.
+2.4.1 Motivation
+Suppose that, on the jth iteration, we have the previous OP parameters (cid:0) p˜ (j−1) ,p˜ (j−1)(cid:1) ,
+D FA
+along with {yˆ,z,ψ,π}. The preceding results enable us to get the moments of U and
+8. As a result, empirical Bayes methods are sometimes said not to be “fully Bayesian.”
+22
+On Truthing Issues in Supervised Classification
+Algorithm 1 MMSE testing with empirical Bayes estimation of (p˜ ,p˜ ) via ratios of
+D FA
+jointly normal RVs.
+1: function EmpiricalBayesViaRatios(yˆ,z,ψ,π)
+(0) (0)
+2: Initialize p˜ ← 0.5,p˜ ← 0.5,j ← 0,MAD ← ∞
+D FA
+3: while j < j max and MAD ≥ tol do
+4: j ← j +1
+5: for i ← 1 : N do
+(j−1) (j−1)
+6: Compute p i and q i from yˆ i ,z i ,ψ i , p˜ D , and p˜ FA (cid:46) Eqs. (10), (11), (14)
+7: Use {p i }N i=1 and (cid:8) yˆ,z,ψ,p˜ D (j−1) ,p˜ F (j A −1)(cid:9) to compute µ U , σ U 2 (cid:46) Eqs. (12), (13)
+8: Use {q i }N i=1 and (cid:8) yˆ,z,ψ,p˜ D (j−1) ,p˜ F (j A −1)(cid:9) to compute µ V , σ V 2 (cid:46) Eqs. (15), (16)
+9: if mean approximation for P D from µ U ,σ U 2,µ V ,σ V 2 is valid then
+(cid:46) Marsaglia (2006), App. B
+(j) (cid:2) (cid:12) (j−1) (j−1)(cid:3)
+10: p˜
+D
+← E P D(cid:12)yˆ,z;ψ,p˜
+D
+,p˜
+FA
+from mean approximation
+11: else
+12: Get p (cid:0) p D (cid:12) (cid:12)yˆ,z;ψ,p˜ D (j−1) ,p˜ F (j A −1)(cid:1) from µ U ,σ U 2,µ V ,σ V 2
+(cid:46) Marsaglia (1965, 2006), App. B
+(j) (cid:2) (cid:12) (j−1) (j−1)(cid:3)
+13: p˜
+D
+← E P D(cid:12)yˆ,z;ψ,p˜
+D
+,p˜
+FA
+by 1-D numerical integration
+14: if mean approximation for P FA from µ U ,σ U 2,µ V ,σ V 2 is valid then
+(j) (cid:2) (cid:12) (j−1) (j−1)(cid:3)
+15: p˜
+FA
+← E P FA(cid:12)yˆ,z;ψ,p˜
+D
+,p˜
+FA
+from mean approximation
+16: else
+17: Get p (cid:0) p FA (cid:12) (cid:12)yˆ,z;ψ,p˜ D (j−1) ,p˜ F (j A −1)(cid:1) from µ U ,σ U 2,µ V ,σ V 2
+(j) (cid:2) (cid:12) (j−1) (j−1)(cid:3)
+18: p˜
+FA
+← E P FA(cid:12)yˆ,z;ψ,p˜
+D
+,p˜
+FA
+by 1-D numerical integration
+(j) (j)
+19: Clip p˜ and p˜ to [α,1−α]
+D FA
+(cid:8)(cid:12) (j) (j−1)(cid:12) (cid:12) (j) (j−1)(cid:12)(cid:9)
+20: MAD ← max (cid:12)p˜ −p˜ (cid:12),(cid:12)p˜ −p˜ (cid:12)
+D D FA FA
+(cid:0) (j) (j)(cid:1)
+21: (p˜ D ,p˜ FA ) ← p˜ D ,p˜ FA (cid:46) Final OP parameters
+22: return (p˜ D ,p˜ FA )
+Bothalgorithmsusedtol = 10−3,j = 30,α = 10−3,andAlgorithm2usedM = 5000.
+max
+Theyalsoallowforsomecorrectly-labeledsamples. Ify isknownorcanberecoveredexactly
+i
+from z , then p , q , or p (1|yˆ,z ;ψ ,p˜ (j−1) ,p˜ (j−1) ) equals 1(y = 1). Algorithm 1 will
+i i i Y|Yˆ i,Zi i i i D FA i
+add the proper constants to the moments of U and V, and Algorithm 2 will always draw
+the proper realization of the correct-label RV.
+2.4.4 Relation to EM Algorithm and Remarks on Convergence
+Like many empirical Bayes methods, our iterative algorithms are similar to the EM algo-
+rithm but differ in that the hidden or latent variables—namely, the correct labels—are RVs
+instead of non-random quantities. The above relationships let us obtain the approximate
+conditional means of P and P directly, so our “E-step” does not employ an auxiliary
+D FA
+function like the EM algorithm does. Also, the other latent variables—namely the OP
+parameters (p˜ ,p˜ )—are determined using MMSE rather than ML estimation, so our “M-
+D FA
+step”performsminimizationoftheMSEratherthanmaximizationofanauxiliaryfunction.
+25
+On Truthing Issues in Supervised Classification
+We consider two point estimates and one range estimate. The first point estimate is the
+conditional mean, which is optimal in the MMSE sense. The accuracy and precision RVs
+are approximately normal, so it is just the mean. For REC or P , P , or F , we can use
+D FA β
+the mean approximation if the MAC holds or resort to numerical integration or sampling.
+For P-R or ROC analysis, we can just use the conditional means of the individual elements.
+The second point estimate is the MAP estimate, the most-probable value of the metric
+RV. It can be obtained by computing the posterior at a fine resolution and finding the peak.
+The optimal range estimate is the p%-credible region, which specifies a region such
+that, with probability p/100, the metric RV lies inside the region. The credible region is
+notnecessarilyunique, butonewaytoobtainareasonablecredibleregionistoapplybinary
+search to find a threshold c such that the numerical integral of the posterior over the points
+where the posterior exceeds c is equal to p/100 within some tolerance.
+Finally, we reiterate that Algorithms 1 and 2 and the subsequent optimal-estimation
+calculations never attempt to estimate the correct-label RVs Y. Making a hard decision
+about Y at any point could introduce errors into downstream processing, as remarked in
+Section 1.4. Our approach avoids doing so while using all available information to produce
+its estimates.9
+2.6 Alternative Testing Approaches
+For comparison purposes, we mention some alternative approaches to testing. We first
+present four suboptimal methods, and then we describe a fully Bayesian approach, which
+is optimal but handles the OP parameters differently than the empirical Bayes approach.
+2.6.1 Suboptimal Testing Approaches
+The first suboptimal approach is to estimate the correct labels and then treat the esti-
+mates as if they were correct to improve on the OP parameters (p˜ ,p˜ ). We present
+D FA
+an iterative method in Algorithm 3 and denote its estimate of the correct-label RVs Y
+as yˇ. On the jth iteration, the algorithm uses the previous OP parameters (p˜ ,p˜ ) =
+D FA
+(cid:0) p˜ (j−1) ,p˜ (j−1)(cid:1) and estimates Y according to the MPE criterion. Let h (Yˆ,Z ) be an esti-
+D FA i i i
+mator of Y given Yˆ, Z , and parameters ψ , p˜ (j−1) , p˜ (j−1) , which are suppressed because
+i i i i D FA
+they are not RVs. The probability of error of h is p (h (Yˆ,Z ),Y ) = E[1(h (Yˆ,Z ) (cid:54)=
+i error i i i i i i i
+Y )] = (cid:80) (cid:80) 1(h (yˆ,z ) (cid:54)= y )p(yˆ,z ,y ). This approach seeks (hMPE, ..., hMPE) =
+i yˆi,zi y i i i i i i i 1 N
+argmin N−1(cid:80)N p (h (Yˆ,Z ),Y ).
+(h1,...,hN) i=1 error i i i i
+The solution consists of finding the MPE estimator for each individual Y , and the
+i
+standard result is that the MAP estimator minimizes the probability of error (see (2) or
+Appendix D). Thus, the algorithm computes yˇ(j) using:
+(j) (cid:0) (j−1) (j−1)(cid:1)
+yˇ = argmaxp y|yˆ,z ;ψ ,p˜ ,p˜ , i = 1,...,N. (22)
+i i i i D FA
+y∈Y
+The algorithm then uses these estimates to compute the empirical probabilities of de-
+(j) (j)
+tection and false alarm p˜ and p˜ . This approach is similar to Algorithms 1 and 2 except
+D FA
+9. IfonewantstoestimateY,thenonecandosousing(10)after(p˜ ,p˜ )hasbeendetermined. However,
+D FA
+subsequently using this estimate to compute testing metrics runs counter to our approach.
+27
+Su
+Algorithm 3 Suboptimal estimation of (p˜ ,p˜ ) by estimating the correct-label RVs Y.
+D FA
+1: function EstimateOPParametersViaEstimatedCorrectLabels(yˆ,z,ψ,π)
+(0) (0)
+2: Initialize p˜ ← 0.5,p˜ ← 0.5,j ← 0,MAD ← ∞
+D FA
+3: while j < j max and MAD ≥ tol do
+4: j ← j +1
+5: for i ← 1 : N do
+(j) (cid:0) (j−1) (j−1)(cid:1)
+6: yˇ i ←argmax y∈Y p Yi|Yˆ i,Zi y|yˆ i ,z i ;ψ i ,p˜ D =p˜ D ,p˜ FA =p˜ FA (cid:46) Eq. (22)
+7: Compute empirical p˜ (j) and p˜ (j) from yˆ and yˇ(j) = (cid:0) yˇ (j)(cid:1)N
+D FA i i=1
+(j) (j)
+8: Clip p˜ and p˜ to [α,1−α]
+D FA
+(cid:8)(cid:12) (j) (j−1)(cid:12) (cid:12) (j) (j−1)(cid:12)(cid:9)
+9: MAD ← max (cid:12)p˜ −p˜ (cid:12),(cid:12)p˜ −p˜ (cid:12)
+D D FA FA
+(cid:0) (j) (j)(cid:1)
+10: (p˜ D ,p˜ FA ) ← p˜ D ,p˜ FA (cid:46) Final OP parameters
+11: return (p˜ D ,p˜ FA )
+that it makes a hard decision about the correct labels on every iteration. This approach
+leverages the testing model and minimizes a well-defined penalty criterion, but it is subop-
+timal according to Section 1.4 because it estimates Y when it should estimate (P ,P ).
+D FA
+We make no claims about its convergence properties. We again used tol = 10−3, j = 30,
+max
+α = 10−3.
+Like Algorithms 1 and 2, Algorithm 3 only estimates the final OP parameters (p˜ ,p˜ ).
+D FA
+Following this step, this approach applies (22) to get the final MPE or MAP estimate yˇ of
+Y given {yˆ,z,ψ,p˜ ,p˜ }. Final estimates of the metrics are obtained by treating yˇ as if
+D FA
+it were correct and computing empirical metrics for {yˆ,yˇ}.
+The second suboptimal approach neglects estimation theory completely; it just merges
+the metrics calculated for each individual labeler’s labels. For each t ∈ T, it treats the
+labels from the tth labeler as if they were correct, and it computes the empirical metric for
+these samples only. Doing so produces T instances of a metric. The final estimate is then
+obtained using a centrality statistic, such as the mean or median, of the T instances.
+The third and fourth suboptimal approaches use the noisy-label conditional distribution
+p(z |y ;ψ ) instead of the testing model (7), so they omit p(yˆ|y ;p˜ ,p˜ ) and (p˜ ,p˜ ).
+i i i i i D FA D FA
+They are suboptimal because they neglect the relationship between Yˆ and Y and thus
+i i
+fail to exploit the predicted labels yˆ fully. The third approach uses MMSE estimation
+but replaces p(y |yˆ,z ;ψ ,p˜ ,p˜ ) with p(y |z ;ψ ) in (11)–(16). The fourth approach
+i i i i D FA i i i
+estimates the correct labels and makes the same substitution in (22). (Equivalently, one
+can set j
+max
+= 0 in Algorithm 1, 2, or 3, so (p˜
+D
+,p˜
+FA
+) = (1/2,1/2) and (10) reduces to (21).)
+2.6.2 Fully Bayesian Estimation
+Another alternative is a fully Bayesian approach, which treats (p˜ ,p˜ ) as an unobserved
+D FA
+realization of nuisance-parameter RVs (P˜ ,P˜ ) with prior p(p˜ ,p˜ ). A uniform distri-
+D FA D FA
+bution over the unit square serves as a non-informative prior.
+This approach estimates each metric RV by marginalizing out (P˜ ,P˜ ), so the es-
+D FA
+timate is not conditioned on a particular instance of (p˜ ,p˜ ), and no iteration is re-
+D FA
+quired. For example, consider MMSE estimation of the accuracy RV. For an estima-
+28
+On Truthing Issues in Supervised Classification
+tor h(Yˆ,Z) of ACC, the MSE is E (cid:2)(cid:0) h(Yˆ,Z) − ACC (cid:1)2(cid:3) , and the MMSE estimator is
+hMMSE = argmin E (cid:2)(cid:0) h(Yˆ,Z)−ACC (cid:1)2(cid:3) . The standard result (see (1) or Appendix C) is
+h
+that the solution is the conditional mean, so the fully Bayesian estimate of ACC is
+(cid:90) 1(cid:90) 1
+E [ACC |yˆ,z;ψ] = E[ACC |yˆ,z,p˜ ,p˜ ;ψ]p(p˜ ,p˜ )dp˜ dp˜ .
+p(p˜D,p˜FA) D FA D FA D FA
+0 0
+This estimate minimizes the MSE under the assumption that the OP parameters are RVs
+(P˜ ,P˜ ) rather than non-random quantities.
+D FA
+In contrast, the empirical Bayes approach does not view (p˜ ,p˜ ) as realizations of
+D FA
+RVs; it treats them as unknown, non-random parameters of p(yˆ|y ;p˜ ,p˜ ), so it does
+i i D FA
+not marginalize them out, and its estimates depend on them. For example, it computes
+(cid:2) (cid:12) (cid:3)
+E P D(cid:12)yˆ,z;ψ,p˜
+D
+,p˜
+FA
+in (19), where the moments of U and V are conditional on {yˆ, z, ψ,
+p˜ , p˜ }, which depends on the specific choice of (p˜ ,p˜ ).
+D FA D FA
+Both approaches are optimal according to Section 1.4, but they differ in their treatment
+of the OP parameters. Marginalization over (P˜ ,P˜ ) is a form of averaging, so the fully
+D FA
+Bayesianapproachcomputesanaverage grade. TheempiricalBayesapproachismorefaith-
+ful to the grading analogy at the beginning of this section: The quiz has a particular grade,
+represented by (p˜ ,p˜ ), rather than an average grade. Nevertheless, experimentation is
+D FA
+required to compare the performance of these approaches; it appears in Section 5.2.1.
+2.7 MMSE Testing for Multi-Class Classification
+This section discusses the extension of MMSE testing to multi-class classification (C > 2)
+and some of the challenges associated with it. An immediate challenge is that it might
+be difficult to model p(z|y;ψ) or estimate ψ and π, but the related work described in
+Sections 1.2.1 and 1.2.2 is very encouraging.
+WebeginbyintroducingtheC×C conditional confusion matrix. WeuseKemp todenote
+its empirical form, and we indicate an element of it by Kemp to emphasize its conditional
+n|(cid:96)
+nature.10 Then Kemp is defined as
+n|(cid:96)
+no. of times yˆ = n and y = (cid:96)
+Kemp = i i , (cid:96),n ∈ Y. (23)
+n|(cid:96) no. of times y = (cid:96)
+i
+The RV form of the matrix is K, with
+1 (cid:80)N 1(yˆ = n and Y = (cid:96))
+K = N i=1 i i , (cid:96),n ∈ Y.
+n|(cid:96) 1 (cid:80)N 1(Y = (cid:96))
+N i=1 i
+2.7.1 Empirical Bayes via Sampling (Multi-Class Classification)
+We make the same assumptions as for binary classification in Section 2.1. We are given
+{z,yˆ,ψ,π}, each Z has conditional distribution p(z |y ;ψ ), and the samples are indepen-
+i i i i
+dent. A graphical model appears in Figure 4. Each predicted label yˆ is a realization of
+i
+an RV Yˆ, which for multi-class classification has conditional distribution p(yˆ|y ;K˜), where
+i i i
+10. Weusenon-standard,zero-based,column-majormatrixindexing;KempcorrespondstoKemp((cid:96)+1,n+1)
+n|(cid:96)
+in standard matrix notation.
+29
+On Truthing Issues in Supervised Classification
+Algorithm 4 MMSE testing for multi-class classification with empirical Bayes estimation
+of K via sampling.
+1: function MultiClassEmpiricalBayesViaSampling(yˆ,z,ψ,π,M)
+2: Initialize
+K˜(0)
+= 1/C for (n,(cid:96)) ∈ Y ×Y, and j ← 0
+n|(cid:96)
+3: repeat
+4: j ← j +1
+5: for m ← 1 : M do
+6: for i ← 1 : N do
+7: Draw y i (m) ∼ p Y|Yˆ i,Zi (y|yˆ i ,z i ;ψ i ,K˜(j−1)) (cid:46) Eq. (25)
+8: K˜(j,m) ← empirical matrix from {yˆ,y(m)} (cid:46) Eq. (23)
+9: K˜(j) ← mean of {K˜(j,m)}M
+m=1
+10: Adjust each row of K˜(j) so each element lies in [α,1−α] and row sums to one
+11: until (cid:12) (cid:12)|K˜(j)−K˜(j−1) (cid:12) (cid:12)| max < tol or j ≥ j max
+12: K˜ ← K˜(j) (cid:46) Final estimate of K
+13: return K˜
+This method allows for some correctly-labeled samples. If the correct label for the ith
+sampleisknowntobeequalto(cid:96),thenp (y|yˆ,z ;ψ ,K˜(j−1)) = 1(y = (cid:96)),andsampling
+Y|Yˆ i,Zi i i i
+will always produce (cid:96) when drawing a realization for this sample.
+The initial parameter matrix K˜(0) is the result of using a non-informative prior for
+each row of the matrix—namely, a Dirichlet distribution of order C with all concentration
+parameters equal to unity. The algorithm returns K˜, the approximate conditional mean of
+K. The elements of K are bounded and MMSE estimation is employed, so the remarks in
+Section 2.4.4 on convergence may also be applicable.
+2.7.2 Posteriors of Metric RVs (Multi-Class Classification)
+Once the estimate K˜ is available, we can obtain the posteriors of different metric RVs.
+Accuracy is defined in the same way for binary and multi-class classification. Empirical
+accuracy is acc = (no. of times yˆ = y )/N, and its RV form is ACC = N−1(cid:80)N 1(Y =
+i i i=1 i
+yˆ). In the multi-class case, each 1(Y = yˆ) is a Bernoulli RV with success probability
+i i i
+p (yˆ|yˆ,z ;ψ ,K˜). The Bernoulli RVs are independent, so ACC is approximately
+Yi|Yˆ i,Zi i i i i
+normal by the CLT.
+In addition, the ordinary C × C confusion matrix has empirical form Cemp with11
+Cemp = (no. of times yˆ = n and y = (cid:96)) and RV form C with
+n,(cid:96) i i
+N
+(cid:88)
+C = 1(yˆ = n and Y = (cid:96))
+n,(cid:96) i i
+i=1
+(cid:88)
+= 1(Y = (cid:96)).
+i
+i:yˆi=n
+11. Cemp corresponds to Cemp((cid:96)+1,n+1) in standard matrix notation.
+n,(cid:96)
+31
+On Truthing Issues in Supervised Classification
+where only the primary term has been modified to become J (θ;x,z,ψ,π). Since the
+pri
+regularization term is unchanged, we focus on the primary term below.
+3.2 Unified View
+We present a unified view of training with truthing issues that describes general approaches
+for training probabilistic or non-probabilistic predictive models.
+Unified View of Training with Truthing Issues
+1. For probabilistic models, keep the optimality principle from ideal training,
+and modify the primary term to account for {x,z,ψ,π} rather than {x,y}:
+(a) For ML training, which would ideally maximize the likelihood function
+p(y|x;θ) or p(y,x;θ), instead use p(z|x;ψ,θ) or p(z,x;ψ,θ), respec-
+tively.
+(b) For MAP training, which would ideally maximize the posterior distri-
+bution p(θ|y,x), instead use p(θ|z,x;ψ).
+2. For non-probabilistic models that use a loss function and would ideally min-
+imize the empirical risk Remp(θ;x,y), perform MMSE training: retain the
+loss function and minimize RˆMMSE(θ;x,z), the MMSE estimate of the
+empirical-risk RV given {x,z,ψ,π}.
+The unified view is simple, elegant, and intuitively appealing. For probabilistic models,
+training remains true to the original optimality principle from ideal training. For non-
+probabilistic models, training retains the original loss function from ideal training and
+optimizes the MMSE estimate of the empirical risk.
+Each approach is optimal according to Section 1.4. The estimands are appropriate:
+Training for probabilistic models targets the likelihood function or posterior, and training
+for non-probabilistic models targets the empirical risk. The use of the likelihood function,
+posterior, or MMSE estimator means that all available information in {x,z,ψ,π} is fully
+exploited. The penalty or utility criterion is clearly defined. None of the methods try to
+estimate the correct labels.
+Theunifiedviewalsoorganizessomeoftherelatedwork. Thetrainingmethodproposed
+by Raykar et al. (2010) corresponds to Item 1a. Ratner et al. (2016, 2017) and Khetan
+et al. (2018) proposed training approaches that are equivalent to Item 2, although they
+did not arrive at them by applying MMSE estimation. We assume that p(z|y,ψ)π(y) is
+known or has already been learned, but Raykar et al. (2010) and Khetan et al. (2018)
+have demonstrated that one can employ these training approaches while jointly learning
+the noisy-label model.
+The next two sections derive the likelihood functions, posteriors, and MMSE estimator
+that provide the modified primary terms. The derivations are much simpler than those
+for testing because there are no predicted labels yˆ to consider. Indeed, the derivations
+amount to marginalizing over the correct labels. Marginalization introduces some implicit
+regularization by accounting for the uncertainty of the correct labels.12
+12. The author thanks one of the anonymous reviewers for this observation.
+33
+Su
+3.3 Probabilistic Predictive Models (ML or MAP Training)
+Here, we address predictive models based on a probabilistic viewpoint. There are two
+aspects to consider. One aspect is the form of the predictive model: discriminative or
+generative. A discriminative model assumes a form for the posterior p(y|x;θ) and directly
+uses g˜(x;θ) = p(y|x;θ). A generative model assumes a form for the joint distribution
+p(y,x;θ) and uses g˜(x;θ) = p(y,x;θ)/p(x;θ) ∝ p(y,x;θ). Many generative models apply
+the factorization p(y,x;θ) = p(x|y;θ)p(y;θ) and use g˜(x;θ) = p(x|y;θ)p(y;θ)/p(x;θ) ∝
+p(x|y;θ)p(y;θ). The choice of g˜(x;θ) determines J (θ;x,y). Logistic regression and
+pri
+neuralnetworksarecommonexamplesofdiscriminativemodels, andna¨ıveBayesisaclassic
+example of a generative model (see Ng and Jordan, 2001).
+The other aspect is the treatment of the predictive-model parameters θ: non-random
+or random. When the parameters are non-random, ML training is employed. For a dis-
+criminative model, this means finding θ to maximize the likelihood function p(y|x;θ); for
+a generative model, this means finding θ to maximize the likelihood function p(y,x;θ).
+When the parameters are RVs Θ with prior p(θ), MAP training is used. This means find-
+ingθthatmaximizestheposteriorp(θ|y,x);theposteriorisexpandeddifferentlydepending
+upon whether the model is discriminative or generative.
+By considering both of these aspects, we can derive the primary term—the likelihood
+function or posterior—in the training objective function. The regularization term remains
+unchanged since it does not involve the correct labels.
+3.3.1 Example Case: Discriminative Model, Non-Random Parameters
+Toillustratetheapproach, weconsideradiscriminativemodelwithnon-randomparameters
+θ. In the ideal case, we have access to {x,y} and use ML training to find θ to maximize
+the likelihood function p(y|x;θ), which is
+N
+(cid:89)
+p(y|x;θ) = p(y |x ;θ). (29)
+i i
+i=1
+Equivalently, we can minimize the normalized negative log-likelihood function, which gives
+1
+J (θ;x,y) = − logp(y|x;θ)
+pri
+N
+N
+1 (cid:88)
+= − logp(y |x ;θ). (30)
+i i
+N
+i=1
+34
+Su
+TrainingbasedonMMSEestimationreplacesthepartialderivative∂ (cid:2) Remp(θ;x,y) (cid:3) /∂θ
+j
+with ∂ (cid:2) RˆMMSE(θ;x,z) (cid:3) /∂θ . From (40), this term is
+j
+N
+∂ (cid:2) RˆMMSE(θ;x,z) (cid:3) = 1 (cid:88) (cid:88) p(y |z ;ψ ) ∂ (cid:2) L(g˜(x ;θ),y ) (cid:3)
+i i i i i
+∂θ N ∂θ
+j j
+i=1yi∈Y
+N
+1 (cid:88) (cid:88) ∂L ∂g˜
+= p(y |z ;ψ ) (g˜(x ;θ),y ) (x ;θ). (50)
+i i i i i i
+N ∂g˜ ∂θ
+j
+i=1yi∈Y
+Itisaconvexcombinationofthepartialderivativesofthelossfunction. Itisalsocompatible
+with automatic differentiation methods and inexpensive to compute. For a deep neural
+network, calculating g˜(x
+i
+;θ) and ∂g˜/∂θj represents the vast majority of the computational
+burden, and these quantities must only be computed once—the same burden as in the
+ideal case. Calculating ∂L/∂g˜ requires a negligible amount of computation for a typical loss
+function, so calculating it for each possible value of y does not substantially increase the
+i
+computational burden.
+AnexampleofthepartialderivativesforbinarylogisticregressionappearsinSection5.4
+and Appendix F.2.
+3.4.4 Special Cases
+We briefly consider two special cases at opposite extremes. First, suppose that the cor-
+rect label can be perfectly recovered from the noisy labels; i.e., p(y(cid:48)|z ;ψ ) = 1(y(cid:48) = y ).
+i i i i i
+Then MMSE estimation returns the correct values of the empirical risk and loss func-
+tion. For example, (40) yields RˆMMSE(θ;x,z) = R(θ;x,y) = Remp(θ;x,y), and (43)
+gives LˆMMSE(g˜(x ;θ),Z ) = L(g˜(x ;θ),Y ). Likewise, the partial derivative in (50) reduces
+i i i i
+to (49): ∂ (cid:2) RˆMMSE(θ;x,z) (cid:3) = ∂ (cid:2) Remp(θ;x,y) (cid:3) .
+∂θj ∂θj
+Second, suppose that the noisy labels provide no information about the correct-label
+RVs; i.e., p(z|y;ψ) = p(z;ψ). Then p(y|z;ψ) reduces to π(y), and (37) becomes
+N
+RˆMMSE(θ;x,Z) = 1 (cid:88) (cid:88) L(g˜(x ;θ),y )π(y ) = E (cid:2) R(θ;x,Y) (cid:3) .
+N i i i π(y)
+i=1yi∈Y
+RegardlessofthevalueofZ,theMMSEestimatoralwaysreturnsthemeanoftheempirical-
+risk RV, taken with respect to the class prior π(y). The partial derivative in (50) behaves
+similarly. The MMSE estimator remains unbiased, so (44) still holds. However, the estima-
+tor is a constant, so its variance is zero. By the law of total variance, its MSE is as large as
+possible and equals the variance of R(θ;x,Y) (see Appendix C.1, Item 4).
+3.4.5 Consistency of the MMSE Estimator
+For ideal training, an important reason for minimizing the empirical risk (33) for a class of
+predictive models is consistency of the ERM principle: The ideal empirical risk converges
+in probability to the minimum achievable risk as N → ∞, even though the true distribution
+of (X ,Y )N is unknown (Vapnik, 1991). The relationship between MMSE estimation of
+i i i=1
+the empirical-risk RV and consistency of the ERM principle requires further study. In the
+meantime, we consider the consistency of the MMSE estimator itself.
+40
+On Truthing Issues in Supervised Classification
+The estimator RˆMMSE(θ;x,Z) is consistent if it converges in probability to R(θ;x,Y)
+as N → ∞. In this way, it attains the true value of the empirical-risk RV. Also, an
+estimator is mean-square consistent if its MSE goes to zero as N → ∞, and mean-square
+consistency implies consistency. Hence, if RˆMMSE(θ;x,Z) is mean-square consistent, then
+it is consistent.
+From (46) and (47), the MSE of RˆMMSE(θ;x,Z) is
+N
+E (cid:2)(cid:0) RˆMMSE(θ;x,Z)−R(θ;x,Y) (cid:1)2(cid:3) =
+N
+1
+2
+(cid:88) E (cid:2) var (cid:0) L(g˜(x
+i
+;θ),Y
+i
+) (cid:12) (cid:12)Z
+i
+(cid:1)(cid:3) .
+i=1
+A sufficient condition for when the MMSE estimator is consistent is therefore:
+N
+1 (cid:88) (cid:2) (cid:0) (cid:12) (cid:1)(cid:3)
+N
+l
+→
+im
+∞ N2
+E var L(g˜(x
+i
+;θ),Y
+i
+)(cid:12)Z
+i
+= 0. (51)
+i=1
+If there exists a constant b such that
+(cid:2) (cid:0) (cid:12) (cid:1)(cid:3)
+E var L(g˜(x
+i
+;θ),Y
+i
+)(cid:12)Z
+i
+< b, i = 1,...,N, (52)
+then lim
+N→∞
+N−2(cid:80)N
+i=1
+E
+(cid:2)
+var
+(cid:0)
+L(g˜(x
+i
+;θ),Y
+i
+)
+(cid:12)
+(cid:12)Z
+i
+(cid:1)(cid:3)
+< lim
+N→∞
+b/N = 0, and (51) is satis-
+fied. Hence, if the loss function is bounded, then clearly (52) is fulfilled. If the original loss
+function is unbounded, then one may be able to modify it to make it bounded; for example,
+once the original loss exceeds some threshold, it could be transformed to asymptotically
+approach an upper limit.
+3.5 Advantages of MMSE Training
+Withintheunifiedviewoftraining, MMSEtrainingfornon-probabilisticmodelshasanum-
+berofappealingbenefitscomparedtoMLorMAPtrainingforprobabilisticmodels. MMSE
+training can continue to use the original loss function and involves a simple modification
+to the empirical risk calculation. The MMSE estimator gains standard properties such as
+Bayesian unbiasedness. Gradient descent and automatic differentiation can be used with
+minor modifications. The MMSE estimator is a consistent estimator of the empirical-risk
+RV if the loss function is bounded.
+In contrast, the ML or MAP training approach can require new derivations, and it may
+not be able to leverage existing loss functions and their gradients. The resulting expressions
+could complicate theoretical analysis.
+These differences are evident in the example for binary logistic regression, presented in
+Section 5.4. Equations for the primary terms and gradients are given in Appendix F.
+3.6 Alternative Training Approaches
+The unified view does not cover all possible approaches to training, and here we discuss
+some alternatives.
+41
+Su
+3.6.1 Constructing Weak Losses for Partial Labels
+AnalternativeBayesianapproachbyCid-Sueiro(2012)andCid-Sueiroetal.(2014)studied
+theoretical properties of weak losses for partial labels.15 Labeling used length-C binary-
+encoded vectors. For class y, the correct label was one-hot encoded as y¯ = e¯ , where the
+y
+vectore¯ equalsoneatelementj andzeroelsewhere. Thepartial-labelvectorz¯wassimilarly
+j
+encoded, but multiple elements could be set to one, so the noisy labeler could indicate more
+than one class. The authors considered different constraints on the permitted partial-label
+vectors, so the number of possible partial-label vectors, B, could be an integer between C
+and 2C.
+Recall that s = g˜(x;θ). The authors defined a weak loss Lwk(s,z¯) to be a loss function
+designed to operate on partial labels rather than correct ones. They then introduced an
+equivalent loss Leq(s,y¯) for correct labels:
+Leq(s,y¯) = E [Lwk(s,Z¯)|Y¯ = y¯], (53)
+p(z¯|y¯)
+and they showed that
+(cid:88)
+E [Lwk(s,Z¯)] = p(z¯)Lwk(s,z¯)
+p(z¯)
+z¯
+(cid:88)(cid:88)
+= p(y¯)p(z¯|y¯)Lwk(s,z¯)
+z¯ y¯
+(cid:88) (cid:88)
+= p(y¯) p(z¯|y¯)Lwk(s,z¯)
+y¯ z¯
+= E (cid:2) E [Lwk(s,Z¯)|Y¯] (cid:3) (54)
+p(y¯) p(z¯|y¯)
+= E [Leq(s,Y¯)]. (55)
+p(y¯)
+From this relationship they reasoned that training on partial labels with Lwk(s,z¯) will
+behave like training on correct labels with Leq(s,y¯).
+Given an original loss function L(s,y) intended for correct labels, the equivalent loss is
+Leq(s,e¯ ) = L(s,y), and one would like to find a corresponding weak loss. To this end, the
+y
+authors expanded (53) into a matrix equation:
+ Leq(s,e¯ 0 )   p Z¯|Y¯ (¯b 0 |e¯ 0 ) p Z¯|Y¯ (¯b 1 |e¯ 0 ) ··· p Z¯|Y¯ (¯b B−1 |e¯ 0 )  Lwk(s,¯b 0 ) 
+ Leq(s,e¯ 1 )   p Z¯|Y¯ (¯b 0 |e¯ 1 ) p Z¯|Y¯ (¯b 1 |e¯ 1 ) ··· p Z¯|Y¯ (¯b B−1 |e¯ 1 )  Lwk(s,¯b 1 ) 
+ 
+
+. .
+.
+ 
+
+= 
+
+. .
+.
+. .
+.
+... . .
+.
+ 
+
+ 
+
+. .
+.
+ 
+
+,
+Leq(s,e¯ ) p (¯b |e¯ ) p (¯b |e¯ ) ··· p (¯b |e¯ ) Lwk(s,¯b )
+C−1 Z¯|Y¯ 0 C−1 Z¯|Y¯ 1 C−1 Z¯|Y¯ B−1 C−1 B−1
+(56)
+where ¯b denotes the ith possible partial-label vector, i = 0,1,...,B − 1. The matrix
+i
+tabulatestheconditionaldistributionp(z¯|y¯),soithasdimensionsC×B. Cid-Sueiropointed
+out that, for B > C, an infinite number of solutions for Lwk(s,z¯) exist.
+The MMSE training approach proposed in Section 3.4.1 is also Bayesian, but rather
+than design a new loss function for noisy labels, it uses the MMSE estimator LˆMMSE(s,Z)
+of an original loss function L(s,Y) meant for correct labels. MMSE training assumes that
+15. Portions of the work by van Rooyen and Williamson (2018) are closely related to this approach.
+42
+On Truthing Issues in Supervised Classification
+the noisy labels do not depend on the feature vector because the noisy-label model has the
+form p(z|y)π(y).
+From (42) and (43), the MMSE estimator is the conditional mean of the original loss
+function given Z and is just a convex combination of the original loss function values for
+each possible y, weighted by p(y|Z). For the approach taken by Cid-Sueiro et al., (53)
+suggests that the equivalent loss could be interpreted as the MMSE estimate of the weak
+loss given Y¯ = y¯. To find a weak loss for a given equivalent loss, one must solve the matrix
+equation (56).
+From (45), the MMSE estimator is unbiased in the Bayesian sense, a standard result
+obtained by iterated expectations:
+E [LˆMMSE(s,Z)] = E (cid:2) E [L(s,Y)|Z] (cid:3) = E [L(s,Y)].
+p(z) p(z) p(y|z) p(y)
+Cid-Sueiro et al. obtain a similar relationship, but in the opposite order: (54) and (55) give
+E [Lwk(s,Z¯)] = E (cid:2) E [Lwk(s,Z¯)|Y¯] (cid:3) = E [Leq(s,Y¯)].
+p(z¯) p(y¯) p(z¯|y¯) p(y¯)
+ThisrelationshipcorrespondstoBayesianunbiasednessoftheMMSEestimatoroftheweak
+loss given Y¯.
+MMSE training conditions on the noisy-label RV Z. After Z = z is observed, it uses
+p(y|z) to estimate the original loss function. The work of Cid-Sueiro et al. conditions on
+the correct-label RV Y¯. Before Z¯ is observed, they tabulate p(z¯|y¯) for all combinations of
+z¯ and y¯, and they solve (56) to calculate the weak loss for every possible realization of Z¯
+that might occur.
+In summary, these two Bayesian approaches bear some similarities but address truthing
+issues differently. Neither one estimates the correct labels. One could be interpreted as
+operating in the reverse direction of the other. Cid-Sueiro et al. take the equivalent loss for
+correct labels and construct a weak loss for noisy labels. MMSE training takes the noisy
+labels and estimates the original loss function for correct labels.
+3.6.2 Using Proxy Loss Functions
+Another alternative, proposed by Natarajan et al. (2013, 2018), took a classical (i.e., fre-
+quentist) view when replacing the original loss function L(s,y) of s = g˜(x;θ) and y with
+a proxy loss function designed for noisy labels.16 They considered binary classification
+with a single labeler and took the classical viewpoint, so y is unknown but non-random.
+Assuming that p(z;y) is known, they devised a proxy loss function Lpr(s,Z) for the noisy-
+label RV Z that is an unbiased estimator of L(s,y) in the classical sense, meaning that
+E [Lpr(s,Z)] = L(s,y), ∀y ∈ Y (see Papoulis 1991, §9-2; Kay 1993, §2.3). They then
+p(z;y)
+trained models on z using J (θ;x,z,p(z;y)) = N−1(cid:80)N Lpr(g˜(x ;θ),z ).
+pri i=1 i i
+16. van Rooyen and Williamson (2018) generalized this approach to other situations where a loss function
+for correct labels can be modified to account for noisy labels.
+43
+Su
+TheproxylossfunctionisthesolutionofasystemofC linearequationsinC unknowns:17
+ p (0;0) p (1;0) ··· p (C−1;0)  Lpr(s,0)   L(s,0) 
+Z;y Z;y Z;y
+ p Z;y (0;1) p Z;y (1;1) ··· p Z;y (C−1;1)  Lpr(s,1)   L(s,1) 
+ 
+
+. .
+.
+. .
+.
+... . .
+.
+ 
+
+ 
+
+. .
+.
+ 
+
+=  
+
+. .
+.
+ 
+
+,
+p (0;C−1) p (1;C−1) ··· p (C−1;C−1) Lpr(s,C−1) L(s,C−1)
+Z;y Z;y Z;y
+which is very similar to (56) in the approach by Cid-Sueiro (2012) and Cid-Sueiro et al.
+(2014). The matrix is just the conditional distribution p(z;y); as long as it has full rank, a
+unique solution for Lpr(s,Z) exists.
+This approach exploits knowledge of p(z;y) and does not estimate the correct labels. As
+aclassicalapproach,itdoesnotinvolveaclasspriorπ. Extendingittomultiplelabelersand
+varyingcombinationsoflabelersmightbedifficult. ForT labelers,ifeverylabelerprovidesa
+labelforeverysample, thentheproxylossfunctionmustsatisfyE [Lpr(s,Z)] = L(s,y),
+p(z;y)
+∀y ∈ Y,whereZ = (Z ,Z ,...,Z ). ThisrequirementyieldsasystemofC linearequations
+1 2 T
+in CT unknowns, which is underdetermined for T > 1. If the labelers can decline to provide
+a label but at least one labeler must provide a label for every sample, then the number of
+unknowns becomes (C +1)T −1.
+Incontrast,MMSEtraininginSection3.4.1isaBayesian methodthatexploitstheclass
+prior π as well as p(z|y). It employs the MMSE estimator of L(s,Y), which from (42) is
+LˆMMSE(s,Z) = E [L(s,Y)|Z]. This estimator is unbiased in the Bayesian sense, mean-
+p(y|z)
+ing E [LˆMMSE(s,Z)] = E [L(s,Y)] (cf. (45)). The classical and Bayesian viewpoints
+p(z) p(y)
+are fundamentally different (Kay, 1993, §10.3): The former treats y as an unknown, non-
+randomquantity, andthelattertreatsy asanunobservedrealizationoftheRVY. Classical
+unbiasedness is thus not a paramount objective in Bayesian statistics (see Breiman 2001;
+Gelman et al. 2013, §4.5). Our training approach uses the original loss function, so a proxy
+loss function is unnecessary. Also, from (43), the MMSE estimator is a convex combination
+oforiginallossfunctionvalues;nosystemoflinearequationsmustbesolved. Finally,MMSE
+training readily accommodates multiple labelers and different combinations of labelers for
+different samples.
+3.6.3 Predicting the Noisy Labels
+In another alternative training approach, Sukhbaatar et al. (2015) and Jindal et al. (2016)
+trained a composite neural network, which consists of a base network followed by an ad-
+ditional layer, to predict the noisy labels z from a single labeler. The loss function is
+unchanged, but y is replaced by z. During training, the authors regularized both compo-
+nents of the composite network so that the base network learned p(y|x) and the additional
+layer learned p(z|y). Following training, the base network can be extracted and used to
+predict correct labels.
+Letnn (x;θ)denotethebasenetwork,and(cid:96) (nn (x;θ);ψ)denotetheadditionallayer,
+b a b
+where ψ is a C ×C matrix representing the layer’s estimate of p(z|y). Then the primary
+term for this approach is J (θ,ψ;x,z) = 1 (cid:80)N L (cid:0) (cid:96) (nn (x;θ);ψ),z (cid:1) .
+pri N i=1 a b i
+This approach does not estimate the correct labels, and it jointly estimates both p(y|x)
+and p(z|y). It does not consider the class prior π. For a single labeler, no changes to the
+17. Natarajan et al. only considered binary classification; we offer the formulation for arbitrary C.
+44
+On Truthing Issues in Supervised Classification
+loss function are necessary, but the loss function would have to be modified to account for
+multiple labelers or different combinations of labelers.
+3.6.4 Predicting the Noisy Labels with Trace Regularization
+For multiple independent labelers, Tanno et al. (2019) proposed jointly training a CNN and
+estimating the labelers’ confusion matrices. They used the confusion matrices to adjust
+the softmax output of the CNN to obtain predicted scores for the noisy labels z. The
+training objective combined a cross-entropy loss term and a trace-regularization term. The
+cross-entropy loss was applied to the adjusted CNN outputs and noisy labels z, which
+amounts to predicting the noisy labels like Sukhbaatar et al. (2015). Trace regularization
+was introduced because, as the authors showed, doing so will drive the estimated confusion
+matrices to their actual values, under certain conditions.18 Consequently, as the labelers’
+confusion matrices are estimated, the CNN learns to predict the correct labels.
+Thismethoddoesnotestimatethecorrectlabels. Theestimatedconfusionmatricescan
+be used to obtain estimates of p(z ,y) and p(z |y) for each labeler, as well as π. Tanno et al.
+t t
+also described some computational advantages of their method compared to the EM-based
+methods of Raykar et al. (2010) and Khetan et al. (2018).
+3.7 Suboptimal, Infrastructure-Compatible Training
+There exists significant existing infrastructure, like software packages or machine-learning
+frameworks, that expects correct—or assumed-to-be-correct—labels, and modifying it for
+one of the preceding methods might be impractical or costly. Below, we describe some
+training methods that are suboptimal but compatible with such infrastructure.
+First, label estimation produces an estimate yˇ of the correct-label RVs Y and trains on
+{x,yˇ}insteadof{x,y}. ToestimateY, onecanusetherelatedworkorapplytheMPEcri-
+terion as in Section 2.6.1. The MPE estimator is given by hMPE = argmin E[1(h (Z ) (cid:54)=
+i hi i i
+Y )]. ThestandardresultisthatthesolutionistheMAPestimator(see(2)orAppendixD),
+i
+so yˇ = argmax p(y|z ;ψ ), i = 1, ..., N. Label estimation is suboptimal (cf. Sec-
+i y∈Y i i
+tion 1.4) because training should estimate the primary term—e.g., the empirical-risk RV,
+as in Section 3.4.1—rather than Y.
+Second, voting trains T classifiers, where the tth classifier g is trained on the samples
+t
+and noisy labels—treated as if correct—from the tth labeler only, namely {(x ,z ) : z (cid:54)=
+i i,t i,t
+∅,i = 1,...,N}. Givenanunlabeledsamplex, thepredictedlabelyˆischosenbyamajority
+vote among {g (x;θ )}T . This technique ignores estimation theory so it is suboptimal,
+t t t=1
+and it multiplies training and deployment complexity by T.
+Third, sample replication, which was suggested by Raykar et al. (2010), copies each x
+i
+several times, assigns labels to its copies based on p(y |z ;ψ ), and trains on the copies
+i i i
+and their labels. For example, in binary classification, if p (0|z ;ψ ) = 0.2, then x is
+Yi|Zi i i i
+replicated 5 times, with one copy assigned label 0 and four copies assigned label 1. Direct
+implementation could multiply the storage and computation requirements for training by
+the number of copies made.
+18. Sukhbaatar et al. (2015) mentioned this result but applied different regularization for implementational
+reasons.
+45
+Su
+Figure 5: Binary symmetric broadcast channel.
+These methods offer different compromises between accounting for truthing issues and
+modifying existing infrastructure. Label estimation makes a hard decision about Y before
+training commences, which could introduce mistaken labels into training but requires no
+other modifications. Voting considers different hard decisions about Y from the individual
+labelers, multiplies deployment complexity by T, and requires a simple voting mechanism.
+Samplereplicationnevermakesaharddecisionaboutthecorrect-labelRVsY,offersaquan-
+tized approximation of the approaches given in Sections 3.2, 3.3, and 3.4, and it multiplies
+training resource requirements by the number of copies, but it does not affect deployment
+complexity.
+4. Comparing Combinations of Labelers: An Information-Theoretic View
+The truthing issues have a simple information-theoretic interpretation. For a single sample,
+thecorrect-labelRVY canbeviewedastheinputtoachannel,andthenoisy-labelRVsZ =
+(Z ,...,Z )canbeviewedastheoutputsfromthechannel.19 Thenthemutualinformation
+1 T
+(cid:80) (cid:0) (cid:1)
+I(Z;Y) = p(z,y)log p(z,y)/p(z)π(y) quantifies the amount of information that Z
+z,y 2
+conveys about Y and vice versa (see Cover and Thomas, 1991).
+Here, we show that the interpretation allows us to compare different combinations of
+labelers in terms of mutual information, at least in theory. In Section 5.5, we demonstrate
+that the training and testing techniques of Sections 2 and 3 enable us to exploit that
+information in practice.
+4.1 Binary Symmetric Broadcast Channel
+We illustrate this viewpoint for binary classification. For simplicity, we assume that the
+labelers or noisy-label RVs are conditionally independent, although the interpretation ap-
+plies for conditionally dependent labelers as well. We also assume that all labelers have the
+same conditional distribution and that each labeler assigns a noisy label to every sample,
+so it suffices to consider a single sample.
+19. In a theoretical context, Lugosi (1992) presented such a channel interpretation for a single labeler.
+46
+Su
+Figure 6: Graph of the mutual informa- Figure 7: Mutual information I(Z;Y|ε(cid:48))
+tion I(Z;Y|T,ε) of BSBC for of standard BSC as a function
+π(1) = 0.1 as a function of T of class prior π(1) and error
+and ε. probability ε(cid:48).
+4.3 Multiple Mediocre Labelers or Single Expert Labeler
+Figure6alsoindicatesthat, for0 < ε(cid:48) < ε < 1/2, I(Z;Y|T,ε)canequalorexceedI(Z;Y|ε(cid:48))
+if T is sufficiently large. Hence, multiple mediocre labelers can be as informative as—or
+more informative than—a single expert labeler. This result helps justify crowdsourcing and
+explainitssuccesses. WecanagainusebinarysearchtofindtheminimumvalueofT needed
+to satisfy I(Z;Y|T,ε) ≥ I(Z;Y|ε(cid:48)).
+Figure 8 shows example curves for ε(cid:48) ∈ {0.01,0.02,0.05,0.10} and π(1) = 0.4. The
+curves rise steeply for small values of T before diminishing returns set in; as T → ∞, ε
+approaches an asymptote at 1/2. Hence, a few mediocre labelers may suffice to obtain a
+small equivalent error probability ε(cid:48). Alternatively, one might desire a very small value of
+ε(cid:48) that no single expert can achieve, but a few human—not superhuman—labelers might
+be able to attain it together.
+This possibility is reminiscent of boosting (see Schapire, 1990; Freund and Schapire,
+1997), in which multiple weak learners are leveraged to achieve the performance of a strong
+learner. We have not explored this relationship further but make some brief remarks. In
+boosting, the weak learners perform slightly better than random guessing, but the correct
+labels are known, and this information is exploited to improve performance. With truthing
+issues, thenoisylabelsmightalsobequiteinaccurateandthecorrectlabelsareunobserved,
+but the conditional distribution p(z|y;ψ) is known, and it provides information about the
+correct labels for training and testing.
+Theinformation-theoreticimplicationofequivalentinformationisintriguing,butitdoes
+not explain how to exploit the information that Z or Z conveys about Y. Fortunately, the
+methods developed in Sections 2 and 3 provide a means to do so. They should produce
+better estimates as T grows because the variance of an optimal estimator decreases as more
+48
+On Truthing Issues in Supervised Classification
+0.5
+0.45
+0.4
+0.35
+0.3
+0.25
+0.2
+0.15
+0.1
+0.05
+0
+5 10 15 20 25 30 35 40 45 50
+Number of Labelers
+relebaL
+hcaE
+fo ytilibaborP
+rorrE
+Class Prior Pr(Y=1) = 0.40
+Multiple-Labeler Error Probability Needed to Match Single Labeler
+Single-labeler error prob. = 0.10, I(Z;Y) = 0.512 bits
+Single-labeler error prob. = 0.05, I(Z;Y) = 0.690 bits Single-labeler error prob. = 0.02, I(Z;Y) = 0.832 bits
+Single-labeler error prob. = 0.01, I(Z;Y) = 0.891 bits
+Figure 8: Number of labelers needed to achieve the same mutual information as a single
+labeler for π(1) = 0.4.
+(independent) noisy observations become available.20 For T sufficiently large, the estimates
+for the mediocre labelers should become comparable to those for the single expert labeler.
+Section 5.5 presents a couple of experiments that verify the implication.
+5. Experiments
+We conducted a number of experiments to see how the different testing and training meth-
+ods performed and to check the implication of equivalent mutual information for different
+combinations of labelers.
+5.1 Simulation
+To exercise the testing methods, we need correct, noisy, and predicted labels. To study
+the training methods, we only need correct and noisy labels. These can all be generated
+via simulation. Of course, the methods do not use the correct labels, which would not be
+available in the intended applications, but simulation lets us compare the results with the
+ideal case.
+5.1.1 Simulating Correct and Predicted Labels
+Simulationforadesiredclasspriorπ issimple. Forbinaryclassification,theN correct-label
+realizations y(0) are drawn independently B(π(1)). For multi-class classification, they are
+20. ThisbehaviorrelatestoT,thenumberofnoisylabelspersample,ratherthanN,thenumberofsamples.
+IncreasingT meansmorenoisyobservationsofY areavailabletoreducetheuncertaintyaboutthecorrect
+labelforasample. MerelyincreasingN doesnotprovideanymoreobservationsfortheprevioussamples.
+49
+Su
+drawn independently from a categorical distribution with prior π and categories 0, 1, ...,
+(cid:0) (cid:1)
+C −1. Denote such a distribution as Cat π,(0,1,...,C −1) .
+Experiments on the testing approaches of Section 2 require simulated predicted labels.
+To simulate a binary classifier with desired operating point (cid:0) pdes, pdes(cid:1) , the predicted-
+D FA
+label realizations yˆ are drawn independently, with yˆ drawn B(pdes) if y (0) = 0, and yˆ
+i FA i i
+drawn B(pdes) if y (0) = 1. Likewise, the performance of a multi-class classifier can be
+D i
+specified by a desired conditional confusion matrix Kdes, where matrix element Kdes con-
+n|(cid:96)
+tains p(yˆ = n|y = (cid:96)). Thus, each predicted-label realization yˆ is drawn independently
+i
+Cat (cid:0) (Kdes,Kdes,...,Kdes ),(0,1,...,C −1) (cid:1) .
+0|yˆi 1|yˆi C−1|yˆi
+5.1.2 Modeling and Simulating Noisy Labels
+Sincethesamplesareindependent, wetemporarilydropthesampleindexiwhiledescribing
+themodelingandsimulationofthenoisy-labelRVs. Untilthispoint,p(z|y;ψ)hasremained
+completely general, so it allows for conditionally dependent labelers; that is, dependencies
+between different noisy-label RVs Z and Z for the same sample. We have also left ψ
+t t(cid:48)
+unspecified. For simulation, we need a more concrete model.
+First, we assume that the noisy-label RVs for a sample are conditionally independent:
+(cid:89)
+p(z|y;ψ) = p(z |y;ψ ), (58)
+t t
+t:zt(cid:54)=∅
+where ψ = (ψ ) , and ψ contains parameters that determine how the tth labeler labels
+t t∈T t
+the sample. This assumption is primarily for implementational convenience; we could have
+used a model with dependent labelers like one of the models in Holodnak et al. (2018).
+Second, we let ψ = (δ,φ ), where δ ∈ [0,1] is the sample difficulty, and φ ∈ [0,1]
+t t t
+is the labeler fallibility. The sample difficulty represents the ambiguity about the correct
+label inherent to the sample itself. For example, in image recognition, it could indicate the
+amount of blur or noise. The labeler fallibility is an attribute of the tth labeler; it could
+reflect an analyst’s experience or a crowdsourcing participant’s trustworthiness.
+The model is then
+
+1−ε(δ,φ ), if z = y ∈ Y;
+ t
+
+p(z|y;δ,φ ) = ε(δ,φt) , if z (cid:54)= y ∈ Y, z ∈ Y; (59)
+t C−1
+
+0, if z (cid:54)∈ Y;
+where the labeling-error probability ε(δ,φ ) is a bilinear function:
+t
+C −1
+ε(δ,φ ) = (δ−δφ +φ ) , 0 ≤ δ ≤ 1,0 ≤ φ ≤ 1. (60)
+t t t t
+C
+The labeler chooses Z to be the correct label with probability 1 − ε(δ,φ ) and makes a
+t t
+mistake with probability ε(δ,φ ) ∈ [0,1]. If a mistake occurs, then Z is equiprobably
+t t
+distributed over the C−1 possible incorrect labels. If δ = φ = 0, then Z ≡ y, but if either
+t t
+parameter is non-zero, then ε(δ,φ ) increases with both δ and φ . If either δ = 1 or φ = 1,
+t t t
+then Z is equiprobably distributed over Y.
+t
+50
+On Truthing Issues in Supervised Classification
+Our model resembles the one by Whitehill et al. (2009), but our formulation is slightly
+different, and our purpose is significantly different. Their model is for binary classification,
+whereas our model applies to arbitrary C. Their model allows for adversarial labelers who
+tendtochoosetheoppositeofthecorrectbinarylabel,butwhenC > 2,the“opposite”ofthe
+correct label is not obvious. More important, Whitehill et al. concentrated on estimating
+the model parameters, while we focus on exploiting the model when its parameters are
+known. In the latter case, an adversarial labeler who is known to frequently choose the
+opposite of the correct label is actually more informative than a sloppy labeler who assigns
+labels equiprobably at random.21
+Finally, we again consider all samples and let δ = (δ )N and φ = (φ )T . Then
+i i=1 t t=1
+ψ = (δ,φ), and ψ = (δ ,φ), so
+i i
+N
+(cid:89)
+p(z|y;ψ) = p(z |y ;δ ,φ)
+i i i
+i=1
+N
+(a) (cid:89) (cid:89)
+= p(z |y;δ ,φ ), (61)
+i,t i t
+i=1t:zi,t(cid:54)=∅
+where (a) is from (58).
+During simulation, we draw δ , i = 1, ..., N, and φ , t = 1, ..., T, independently
+i t
+from beta or uniform distributions. We also draw a vector η = (η )T , where η is the
+t t=1 t
+approximate probability that the tth labeler provides a label for a sample. Each η is drawn
+t
+independently U(0,1), where U(a,b) denotes a uniform distribution over (a,b). For the
+ith sample, we repeatedly draw η ∼ (cid:0) B(η ) (cid:1)T with independent Bernoulli-distributed
+i t t=1
+elements until at least one element of η equals unity. We then simulate z in accord
+i i,t
+with (59) and (60) for t ∈ {t(cid:48) : η = 1}, and we set z = ∅ for t ∈ {t(cid:48) : η = 0}.
+i,t(cid:48) i,t i,t(cid:48)
+5.2 Examples of Testing: Binary Classification
+A variety of examples that illustrate aspects of the testing approaches for binary classifica-
+tion appear here. We emphasize that, except for the ideal case, no correct labels were used
+during testing.
+5.2.1 Main Testing Example
+A simulation was conducted with N = 103, T = 5, π(1) = 0.2, (cid:0) pdes,pdes(cid:1) = (0.8,0.3),
+D FA
+δ ∼ Beta(1,5), ∀i, and φ ∼ U(0,0.4), ∀t. The simulator produced δ = (0.098, 0.046,
+i t
+0.347, ..., 0.199, 0.221), φ = (0.249, 0.030, 0.387, 0.244, 0.154), and η = (0.727, 0.873,
+0.286, 0.657, 0.232). The number of samples labeled by each labeler was 727, 879, 272, 667,
+229, respectively; on average, there were about 2.8 noisy labels per sample.
+(j) (j)
+Figure 9 shows the progression of the estimates p˜ and p˜ for the iterative methods.
+D FA
+The dotted lines show the ideal values of p and p if the correct labels were known;
+D FA
+the ideal values differ slightly from
+(cid:0) pdes,pdes(cid:1)
+because they are the result of sampling and
+D FA
+simulation. For MMSE testing, both empirical Bayes methods (Algorithms 1 and 2), the
+21. Ipeirotis et al. (2010, §3) made a similar observation in the context of assessing the cost of a labeler.
+51
+Su
+1
+0.9
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+0 2 4 6 8 10
+Iteration number
+eulavdetamitsE
+Accuracy
+80
+70
+60
+Ideal (correct labels known): pD
+Ratios: pD 50 Sampling: pD
+Estimate labels: pD 40 Ideal (correct labels known): pFA
+R Sa a m tio p s l : in p g F : A pFA 30
+Estimate labels: pFA
+20
+10
+0
+0.6 0.65 0.7 0.75 0.8 0.85 0.9
+Accuracy
+Figure 9: Main testing example: Progres-
+(cid:0) (j) (j)(cid:1) sion of p˜ ,p˜ in iterative
+D FA
+estimation methods.
+ytisneD
+ytilibaborP
+Ideal (correct labels known)
+Ratios: Density
+Ratios: Cond. mean Ratios: MAP estimate
+Ratios: 95%-credible region Sampling: Density
+Sampling: Cond. mean
+Sampling: MAP estimate Sampling: 95%-credible region
+Estimate labels Labelers: Mean Labelers: Median
+Labelers
+Full Bayes: Density Full Bayes: Cond. mean
+Full Bayes: MAP estimate
+Figure 10: Main testing example: Accu-
+racy estimates by all methods.
+Markers are spaced vertically
+for easier readability.
+estimates improved on each iteration, and both converged to nearly the same final OP
+parameters after seven iterations. The suboptimal method of estimating the correct labels
+(Algorithm 3) converged after nine iterations; its final OP parameter p˜ was slightly more
+FA
+accurate than those of the empirical Bayes methods, but its final OP parameter of p˜ was
+D
+considerably less accurate than theirs.
+Table 10 summarizes the estimates of all metrics by the techniques presented in Sec-
+tion 2, and Figure 10 shows the results for accuracy. Results for the suboptimal methods
+that do not fully exploit the predicted labels appear in Section 5.2.2. For MMSE testing
+with the empirical Bayes methods (“Ratios” and “Sampling”), the figure displays the es-
+timated posterior density, conditional mean, MAP estimate, and 95%-credible region for
+ACC. The figure also displays a gray histogram, which was created by taking the final OP
+parameters(p˜ ,p˜ )fromAlgorithm2, generating5000samplerealizationsofY from(10),
+D FA
+and computing the empirical accuracy for each realization. The optimal estimates are fairly
+close to the ideal accuracy, and the credible regions contain the ideal accuracy. The re-
+sults for the two methods are very similar; this behavior was observed for all examples, so
+subsequent figures do not include results for Algorithm 2 beyond the histograms.
+The figure also shows the estimated accuracy for the suboptimal method in Algorithm 3
+(“Estimate labels”). This estimate is reasonably good, but it does not provide any sense of
+uncertainty like a credible region does. Also, this algorithm produced inaccurate estimates
+of REC or P (shown next in Figures 11 and 12).
+D
+Likewise, the figure displays the T instances of accuracy for each individual labeler
+(“Labelers”). We also computed the mean and median of these instances; we applied the
+algorithm by Vardi and Zhang (2000) to calculate the multi-dimensional median. The
+instances are fairly inaccurate, so their mean and median also yield poor estimates.
+The last set of results in the figure are for the fully Bayesian approach. Its estimated
+density is very spread out as a result of marginalization over (P˜ ,P˜ ), and its conditional
+D FA
+52
+On Truthing Issues in Supervised Classification
+Scalar Metrics Joint Metrics
+P or
+Estimate ACC PREC D P F (PREC,REC) (P ,P )
+REC FA 1 D FA
+Ideal (correct labels known)
+Ideal 0.712 0.421 0.810 0.316 0.554 (0.421, 0.810) (0.810, 0.316)
+MMSE Testing: Empirical Bayes estimation
+via ratios of jointly normal RVs (Alg. 1)
+Conditional mean 0.795 0.328 0.534 (0.397, 0.795)b (0.795, 0.328)b
+0.700a 0.397a
+MAP estimate 0.795 0.325 0.529 (0.397, 0.795)c (0.796, 0.325)c
+Credible (lower) 0.687 0.373 0.764 0.317 0.506 — —
+region (upper) 0.713 0.420 0.828 0.335 0.553 — —
+MMSE Testing: Empirical Bayes estimation via sampling (Alg. 2)
+Conditional mean 0.796 0.327 0.535 (0.397, 0.796)b (0.796, 0.327)b
+0.701a 0.397a
+MAP estimate 0.796 0.325 0.530 (0.397, 0.796)c (0.796, 0.325)c
+Credible (lower) 0.688 0.374 0.765 0.316 0.506 — —
+region (upper) 0.714 0.421 0.829 0.334 0.554 — —
+Estimation of correct labels (Alg. 3)
+Estimate labels 0.720 0.402 0.868 0.316 0.550 (0.402, 0.868) (0.868, 0.316)
+Combine metrics from individual labelers
+Mean 0.636 0.431 0.615 0.354 0.506 (0.431, 0.615) (0.615, 0.354)
+Median 0.622 0.421 0.605 0.354 0.504 (0.421, 0.605) (0.605, 0.354)
+Labeler No. of Metrics from
+index labels individual labelers
+1 727 0.622 0.450 0.574 0.354 0.505 (0.450, 0.574) (0.574, 0.354)
+2 879 0.653 0.414 0.643 0.343 0.504 (0.414, 0.643) (0.643, 0.343)
+3 272 0.618 0.405 0.605 0.377 0.485 (0.405, 0.605) (0.605, 0.377)
+4 667 0.619 0.421 0.587 0.366 0.490 (0.421, 0.587) (0.587, 0.366)
+5 229 0.668 0.465 0.667 0.331 0.548 (0.465, 0.667) (0.667, 0.331)
+Fully Bayesian estimation
+Conditional mean 0.646 0.345 0.664 0.360 0.456 (0.345, 0.664)b (0.664, 0.360)b
+MAP estimate 0.662 0.342 0.714 0.349 0.464 (0.347, 0.690)c (0.663, 0.360)c
+aFor accuracy or precision, the empirical Bayes conditional mean and MAP estimate are identical.
+bTheconditionalmeansforthejointmetricsarethesameasthoseforthecorrespondingscalarmetrics.
+cThe MAP estimate of a joint metric can differ from the MAP estimates of its individual components.
+Table 10: Testing metrics for main testing example.
+mean and MAP estimate are not very accurate. This behavior occurred for other metrics,
+so we do not show the fully Bayesian method in the subsequent figures.
+Next, Figure 11 displays results for the other scalar metrics. MMSE testing using the
+empirical Bayes method of Algorithm 1 produced estimates within about 0.025 of each
+metric. For REC or P , the credible region contains the ideal metric, and for the other
+D
+metrics, it lies outside the credible region by just 0.001. Table 10 indicates that the credible
+regions of Algorithm 2 contained each ideal metric. The suboptimal method of estimating
+the correct labels (Algorithm 3) was quite accurate for several metrics but off by 0.058 for
+REC or P . The use of the labelers’ labels often produced very inaccurate estimates.
+D
+53
+On Truthing Issues in Supervised Classification
+1
+0.95
+0.9
+0.85
+0.8
+0.75
+0.7
+0.65
+0.6
+0.55
+0.5
+0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5
+Prob. of False Alarm
+noitceteDfo.borP
+ROC Analysis
+0.5
+Ideal (correct labels known) 0.45
+Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate 0.4
+Ratios:95%-credibleregion
+Estimate labels 0.35
+Labelers: Mean L L a a b b e e l l e e r r s s : Median 0.3
+0.25
+0.2
+0.15
+0.1
+0.05
+0
+0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1
+Recall
+noisicerP
+Precision-Recall Analysis
+Ideal (correct labels known)
+Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate
+Ratios: 95%-credible region
+Estimate labels Labelers: Mean
+Labelers: Median
+Labelers
+Figure 12: Main testing example: Estimates of joint metric RVs for ROC and P-R analysis.
+Figure 12 presents results for P-R and ROC analysis. MMSE testing with empirical
+Bayes estimation produced the best joint estimates; its point estimates are closest to the
+ideal operating points, and its 95%-credible regions contain the ideal operating points. Es-
+timating the correct labels yielded less accurate joint estimates, and it continues to provide
+no sense of uncertainty. Using the labelers’ labels gave very poor estimates.
+5.2.2 Exploitation of Predicted Labels
+Full exploitation of the predicted labels yˆ and OP parameters (p˜ ,p˜ ) is an important
+D FA
+characteristic of the most successful testing methods. Figure 13 shows results for the simu-
+lation in Section 5.2.1 if the predicted labels are not fully exploited, which corresponds to
+the third and fourth suboptimal testing approaches in Section 2.6.1. They use p(z |y ;ψ )
+i i i
+ratherthanthetestingmodel(7)withp(yˆ|y ;p˜ ,p˜ )p(z |y ;ψ ),whichamountstosetting
+i i D FA i i i
+j = 0 in Algorithm 1, 2, or 3. Compared to Figures 10 and 12, the estimated posterior
+max
+and the estimates are quite inaccurate, and the credible regions do not contain the ideal
+metrics. These results illustrate the importance of including the predicted labels and OP
+parameters during estimation.
+5.2.3 Convergence Experiments for Iterative Algorithms
+Section 2.4.4 speculated that, when estimating (p˜ ,p˜ ) during MMSE testing, the empir-
+D FA
+ical Bayes methods (Algorithms 1 and 2) will converge to the global optimum regardless of
+the initial OP parameters. To check this possibility, we conducted two experiments, which
+also included the suboptimal correct-label estimation method (Algorithm 3).
+First, we used the same simulation as in Section 5.2.1 but varied the initial OP parame-
+(cid:0) (0) (0)(cid:1)
+ters p˜ ,p˜ over the 10×10 grid {0.05,0.15,...,0.95}×{0.05,0.15,...,0.95}. Table 11
+D FA
+summarizes the results. The empirical Bayes methods converged to nearly the same final
+OP parameters every time, with maximum absolute errors of about 0.015. In addition, the
+MAC was always satisfied in Algorithm 1. The suboptimal method of Algorithm 3 had
+larger p errors but slightly smaller p errors than the empirical Bayes methods. For this
+D FA
+55
+Su
+80
+70
+60
+50
+40
+30
+20
+10
+0
+0.6 0.65 0.7 0.75 0.8 0.85 0.9
+Accuracy
+ytisneD
+ytilibaborP
+Accuracy
+0.5
+Ideal (correct labels known)
+Ratios: Density 0.45 Ratios: Cond. mean
+Ratios: MAP estimate 0.4
+Ratios: 95%-credible region Estimate labels
+0.35
+0.3
+0.25
+0.2
+0.15
+0.1
+0.05
+0
+0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1
+Recall
+noisicerP
+Precision-Recall Analysis
+Ideal (correct labels known) Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate Ratios: 95%-credible region
+Estimate labels
+Figure 13: ExamplesofestimatesofmetricRVsifthepredictedlabelsyˆ andOPparameters
+(p˜ ,p˜ ) are not fully exploited. Compare with Figures 10 and 12. The plots
+D FA
+do not show the labelers’ results because they are unchanged from those figures.
+Same Ideal Operating Point, Iterative Estimation Method
+Different Initial OP Parameters Ratios Sampling Est. Labels
+Mean 0.0149 0.0131 −0.0473
+Error p −p˜ Std. dev. 3.20×10−4 4.15×10−4 1.61×10−2
+D D
+Max abs. 0.0153 0.0142 0.0715
+Mean −0.0118 −0.0092 −0.0015
+Error p −p˜ Std. dev. 6.34×10−5 8.56×10−5 1.49×10−3
+FA FA
+Max abs. 0.0119 0.0095 0.0033
+Mean 6.6 6.6 6.2
+Number of
+Std. dev. 1.08 1.05 2.35
+Iterations
+Max 8 8 10
+Table 11: Estimation error statistics for the final OP parameters (p˜ ,p˜ ) for iterative es-
+D FA
+timation methods. For the same ideal operating point (p ,p ) = (0.810,0.316),
+D FA
+100 different initial OP parameters were used.
+ideal operating point, all algorithms consistently converged to nearly the same final OP
+parameters.
+Second, we ran another set of simulations that always initialized the iterative algo-
+(cid:0) (0) (0)(cid:1)
+rithms with the default initial OP parameters p˜ ,p˜ = (1/2,1/2), but we varied the
+D FA
+desired operating point
+(cid:0) pdes,pdes(cid:1)
+over the same 10×10 grid as above, which produced
+D FA
+100 different ideal operating points. These simulations used π(1) = 0.5, δ ∼ U(0,1), ∀i,
+i
+φ ∼ U(0,0.5), and η ∼ U(0,1), ∀t. Results appear in Table 12. The empirical Bayes meth-
+t t
+ods converged every time, with average errors near 0.012 and a maximum absolute error
+below 0.045. Again, the MAC was always satisfied in Algorithm 1. The suboptimal method
+of Algorithm 3 performed less well. Although its average errors are no more than 0.021, its
+standarddeviationsareontheorderof0.200anditsmaximumabsoluteerrorexceeds0.333,
+56
+On Truthing Issues in Supervised Classification
+Different Ideal Operating Points, Iterative Estimation Method
+Same Default Initial OP parameters Ratios Sampling Est. Labels
+Mean −0.0113 −0.0114 −0.0141
+Error p −p˜ Std. dev. 1.04×10−2 9.56×10−3 1.95×10−1
+D D
+Max abs. 0.0314 0.0310 0.3590
+Mean 0.0120 0.0122 0.0210
+Error p −p˜ Std. dev. 1.36×10−2 1.14×10−2 2.03×10−1
+FA FA
+Max abs. 0.0442 0.0381 0.3369
+Mean 10.9 11.2 10.4
+Number of
+Std. dev. 3.15 3.46 3.39
+Iterations
+Max 17 18 21
+Table 12: Estimation error statistics for the final OP parameters (p˜ ,p˜ ) for iterative
+D FA
+estimation methods. For 100 different ideal operating points, the same default
+initial OP parameters was used.
+indicating that it often became trapped near a local optimum. These results demonstrate
+the substantial benefit of the empirical Bayes methods over estimating the correct labels.
+5.2.4 Estimation Performance for Different Operating Points
+The convergence experiments in the previous section only examine the estimation error of
+the final OP parameters (p˜ ,p˜ ). For the second set of simulations in that section, we
+D FA
+also compiled statistics on the estimation errors of the final estimates of the scalar and joint
+metrics over the 10 × 10 grid {0.05,0.15,...,0.95} × {0.05,0.15,...,0.95} of
+(cid:0) pdes,pdes(cid:1)
+;
+D FA
+i.e., over 100 different ideal operating points.
+Figure 14 summarizes the error statistics for the estimated scalar metrics by the differ-
+ent testing approaches. For MMSE testing, the point estimates from the empirical Bayes
+methods (Algorithms 1 and 2) have average errors of about 0.012, with standard deviations
+near 0.011. The scale changes between MMSE testing and the other methods. The other
+methods have average errors between 0.001 and 0.043, but their standard deviations range
+from about 0.100 to over 0.200, an order of magnitude greater than those for the empirical
+Bayes methods.
+Figures 15 and 16 display joint error statistics for P-R and ROC analysis. Results
+for MMSE testing were similar for both the conditional mean and MAP estimate, so the
+figures only show estimation errors for the conditional mean of Algorithm 1 and the MAP
+estimate of Algorithm 2. The empirical Bayes methods have average errors near 0.015 in
+each dimension. The square roots of the eigenvalues of the error covariance matrix fall
+between 0.005 and 0.025. The scale changes between MMSE testing and the other methods.
+Thelattermethodshaveaverageerrorsbetween0.005and0.043,buttheeigenvalues’square
+roots range from about 0.100 to over 0.430.
+These results demonstrate the superior estimation performance of the MMSE testing
+methods, whose estimates typically lie within 0.010 to 0.040 of the ideal metrics over a
+wide range of ideal operating points. They significantly outperform the other methods,
+57
+Su
+Recall or
+Accuracy Precision Prob. of Detection Prob. of False Alarm F-score
+-0.011 -0.008 -0.011 0.012 -0.013
+Ratios:
+Cond. Mean
+0.0117 0.0149 0.0102 0.0132 0.0107
+-0.011 -0.008 -0.011 0.012 -0.009
+Ratios:
+MAP Estimate
+0.0117 0.0149 0.0100 0.0128 0.0112
+-0.012 -0.008 -0.011 0.012 -0.013
+Sampling:
+Cond. Mean
+0.0108 0.0141 0.0095 0.0116 0.0097
+-0.012 -0.008 -0.012 0.012 -0.009
+Sampling:
+MAP Estimate
+0.0108 0.0141 0.0095 0.0113 0.0105
+-0.05-0.025 0 0.0250.05 -0.05-0.025 0 0.0250.05 -0.05-0.025 0 0.0250.05 -0.05-0.025 0 0.0250.05 -0.05-0.025 0 0.0250.05
+Error Error Error Error Error
+Recall or
+Accuracy Precision Prob. of Detection Prob. of False Alarm F-score
+-0.017 -0.013 -0.014 0.021 -0.017
+Estimate
+labels
+0.2062 0.2183 0.1944 0.2019 0.2036
+-0.034 -0.028 -0.013 0.043 0.009
+Labelers:
+Mean
+0.1116 0.1139 0.0896 0.1364 0.0864
+-0.021 -0.016 -0.014 0.020 0.022
+Labelers:
+Median
+0.1206 0.1383 0.1143 0.1359 0.1023
+-0.006 -0.001 -0.005 0.009 -0.006
+Full Bayes:
+Cond. mean
+0.1454 0.1642 0.1429 0.1503 0.1469
+-0.5 -0.25 0 0.25 0.5 -0.5 -0.25 0 0.25 0.5 -0.5 -0.25 0 0.25 0.5 -0.5 -0.25 0 0.25 0.5 -0.5 -0.25 0 0.25 0.5
+Error Error Error Error Error
+Figure 14: Scalarmetricestimationerrorsfordifferenttestingapproachesover100different
+ideal operating points. The axis limits differ for MMSE testing with empirical
+Bayes (upper plots: −0.05 to +0.05) and the other approaches (lower plots:
+−0.5 to +0.5). Miniature scatterplots of the estimation errors appear as gray
+dots. The average error is marked with a circle and as text above each circle.
+Multiples of ±1 and ±2 times the standard deviation of the errors appear as
+crosses, and text below the first cross gives the standard deviation.
+58
+On Truthing Issues in Supervised Classification
+0.05
+0.04
+0.03
+0.02
+0.01
+0
+-0.01
+-0.02
+-0.03
+-0.04
+-0.05
+-0.05-0.04-0.03-0.02-0.01 0 0.01 0.02 0.03 0.04 0.05
+Precision Error
+rorrE
+llaceR
+Ratios: Conditional Mean
+0.05
+0.04
+0.03
+0.02
+0.01
+0.0258 0 0.0096
+-0.01
+-0.02
+(-0.0082, -0.0114)
+-0.03
+-0.04
+-0.05
+-0.05-0.04-0.03-0.02-0.01 0 0.01 0.02 0.03 0.04 0.05
+Precision Error
+rorrE
+llaceR
+Sampling: MAP Estimate
+0.0236 0.0093
+(-0.0080, -0.0112)
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+-0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Precision Error
+rorrE
+llaceR
+Estimate labels
+0.5
+0.4
+0.4382 0.3
+0.2
+0.1
+0.0778
+0
+(-0.0131, -0.0142) -0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Precision Error
+rorrE
+llaceR
+Full Bayes: Cond. mean
+0.3264
+0.0572
+(-0.0010, -0.0045)
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+-0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Precision Error
+rorrE
+llaceR
+Labelers: Mean
+0.5
+0.4
+0.3
+0.2
+0.2190 0.1
+0.0337 0
+(-0.0284, -0.0132) -0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Precision Error
+rorrE
+llaceR
+Labelers: Median
+0.2712
+0.0419
+(-0.0149, -0.0153)
+Figure 15: P-R analysis estimation errors for different testing approaches over 100 different
+ideal operating points. The axis limits differ for MMSE testing with empirical
+Bayes (top plots: −0.05 to +0.05) and the other approaches (middle and lower
+plots: −0.5 to +0.5). Miniature scatterplots of the estimation errors appear as
+gray dots. The average error is marked with a circle and listed as an ordered
+pair. Ellipses denote areas that account for 0.6827 and 0.9545 of the density
+of a bivariate normal distribution fitted to the errors, and text adjacent to the
+semi-major and semi-minor axes gives the square roots of the eigenvalues of the
+error covariance matrix.
+59
+Su
+0.05
+0.04
+0.03
+0.02
+0.01
+0
+-0.01
+-0.02
+-0.03
+-0.04
+-0.05
+-0.05-0.04-0.03-0.02-0.01 0 0.01 0.02 0.03 0.04 0.05
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Ratios: Conditional Mean
+0.05
+0.04
+0.03
+0.02
+0.01
+0
+0.0048 -0.01
+( 0.0121, -0.0114) -0.02
+0.0250
+-0.03
+-0.04
+-0.05
+-0.05-0.04-0.03-0.02-0.01 0 0.01 0.02 0.03 0.04 0.05
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Sampling: MAP Estimate
+0.0054
+( 0.0124, -0.0115)
+0.0233
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+-0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Estimate labels
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0995
+0
+-0.1
+( 0.0212, -0.0142)
+-0.2
+0.4151 -0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Full Bayes: Cond. mean
+0.0418
+( 0.0087, -0.0045)
+0.3130
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+-0.1
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Labelers: Mean
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0285 0
+( 0.0426, -0.0132) -0.1
+0.2469
+-0.2
+-0.3
+-0.4
+-0.5
+-0.5 -0.4 -0.3 -0.2 -0.1 0 0.1 0.2 0.3 0.4 0.5
+Prob. of False Alarm Error
+rorrE
+noitceteD
+fo
+.borP
+Labelers: Median
+0.0105
+( 0.0188, -0.0144)
+0.2658
+Figure 16: ROCanalysisestimationerrorsfordifferenttestingapproachesover100different
+ideal operating points. The axis limits differ for MMSE testing with empirical
+Bayes (top plots: −0.05 to +0.05) and the other approaches (middle and lower
+plots: −0.5 to +0.5). Miniature scatterplots of the estimation errors appear as
+gray dots. The average error is marked with a circle and listed as an ordered
+pair. Ellipses denote areas that account for 0.6827 and 0.9545 of the density
+of a bivariate normal distribution fitted to the errors, and text adjacent to the
+semi-major and semi-minor axes gives the square roots of the eigenvalues of the
+error covariance matrix.
+60
+On Truthing Issues in Supervised Classification
+Accuracy
+70
+60
+50
+40
+30
+20
+10
+0
+0.8 0.82 0.84 0.86 0.88 0.9 0.92 0.94 0.96 0.98 1
+Accuracy
+ytisneD
+ytilibaborP
+1
+Ideal (correct labels known)
+Ratios: Density 0.98
+Ratios: Cond. mean
+Ratios: MAP estimate
+Ratios: 95%-credible region 0.96
+Estimate labels
+Labelers 0.94
+0.92
+0.9
+0.88
+0.86
+0.84
+0.82
+0.8
+0.8 0.82 0.84 0.86 0.88 0.9 0.92 0.94 0.96 0.98 1
+Recall
+noisicerP
+Precision-Recall Analysis
+Ideal (correct labels known)
+Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate Ratios: 95%-credible region Estimate labels
+Labelers
+Figure 17: Testing example for a single labeler (T = 1) when a constant labeling-error
+probability ε = 0.1 is assumed for all samples. The mean and median of the
+0
+labelers’ metrics are not shown because T = 1.
+which frequently yield errors in excess of 0.100, 0.200, or more—unacceptable given that
+the metrics lie in [0,1]. The empirical Bayes approach is clearly more appropriate than the
+fully Bayesian one.
+5.2.5 Single Labeler and Constant Labeling-Error Probability
+The testing methods can also be useful if there is a single labeler (T = 1), and one merely
+wants to know how performance would be affected by some worst-case labeling-error prob-
+ability ε . One can simply set δ ≡ 0 and φ ≡ Cε /(C−1) in (60) and apply the methods.
+0 i t 0
+Figure 17 shows an example for T = 1 and ε = 0.1; other simulation settings were
+0
+N = 103, π(1) = 0.6, (cid:0) pdes, pdes(cid:1) = (0.90,0.10), δ ≡ 0, and φ ≡ 0.2. MMSE testing
+D FA i t
+produces accurate estimates, and its estimated posteriors and credible regions allow one to
+understand the possible variability caused by the assumed labeling-error probability. For
+0 < ε
+0
+< 1/2, the estimated correct label yˇ
+i
+is identically equal to the noisy label z
+i,1
+, so the
+markers for the estimated correct labels and the labelers’ labels lie in the same location.
+These suboptimal estimates are much less accurate than those from the empirical Bayes
+method.
+5.2.6 Small Sample Size
+The approximations behind MMSE testing are driven by the CLT, so they should hold for
+small N as long as Nˆ and N − Nˆ are greater than or equal to thirty. We conducted
+1 1
+another simulation with N = 70, which produced Nˆ = 37 and N − Nˆ = 33; other
+1 1
+simulation settings were T = 3, π(1) = 0.5, (cid:0) pdes, pdes(cid:1) = (0.85,0.20), δ ∼ Beta(1,2), ∀i,
+D FA i
+and φ ∼ U(0.2,0.5), ∀t.
+t
+Figure 18 displays results for P and (P ,P ). The posteriors are clearly non-
+FA D FA
+Gaussian, and the 95%-credible regions are large because of the small sample size, but they
+contain the ideal metrics. The suboptimal methods again provide less accurate estimates.
+61
+Su
+Prob. of False Alarm
+16
+14
+12
+10
+8
+6
+4
+2
+0
+0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5
+Prob. of False Alarm
+ytisneD
+ytilibaborP
+1
+Ideal (correct labels known) 0.95
+Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate 0.9
+Ratios:95%-credibleregion
+Estimate labels 0.85
+Labelers: Mean L L a a b b e e l l e e r r s s : Median 0.8
+0.75
+0.7
+0.65
+0.6
+0.55
+0.5
+0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5
+Prob. of False Alarm
+noitceteDfo.borP
+ROC Analysis
+Ideal (correct labels known)
+Ratios: Density
+Ratios: Cond. mean
+Ratios: MAP estimate
+Ratios: 95%-credible region
+Estimate labels
+Labelers: Mean
+Labelers: Median
+Labelers
+Figure 18: Testing example for small sample size (N = 70), with Nˆ = 37.
+1
+5.3 Example of Testing: Multi-Class Classification
+For the multi-class testing methods of Section 2.7, we present an example with C = 4,
+N = 2000, π = (0.2,0.3,0.1,0.4),
+ 
+0.75 0.08 0.10 0.07
+Kdes =   0.10 0.65 0.12 0.13 ,
+0.04 0.06 0.80 0.10
+0.10 0.05 0.05 0.80
+T = 5, δ ≡ 0, ∀i, and φ ∼ U(0,0.4), ∀t. MMSE testing with the empirical Bayes sampling
+i t
+method (Algorithm 4) used M = 2500 × C = 104. We also extended the method that
+estimates the correct labels (Algorithm 3) to multi-class classification. Both algorithms
+converged after six iterations. For the individual labelers, we computed their confusion
+matrices, scaledthetth labeler’sconfusionmatrixbyN/(no. of labels from tth labeler), and
+calculated the mean and multi-dimensional median of the scaled matrices. Apart from the
+ideal case, testing did not involve the correct labels.
+First, Table 13 compares the estimates of the accuracy RV for the different estimation
+methods. MMSE testing produced the most accurate estimates, and the ideal accuracy
+value lies squarely inside the 95%-credible region. Estimating the correct labels yielded
+a reasonably good estimate of accuracy but again without a sense of uncertainty. Using
+the individual labelers’ labels gave accuracies of 0.6586, 0.5667, 0.6397, 0.6698, and 0.5504;
+taking the mean or median of these values produces highly inaccurate estimates of the
+accuracy.
+Second, Table 14 shows the ideal confusion matrix and the estimated confusion matrices
+from the different techniques. Ten matrix elements from MMSE testing are closest to the
+corresponding elements in the ideal confusion matrix, six from the estimation of correct
+labels are closest, one from the labelers’ mean is closest, and one from the labelers’ median
+is closest. (There were two ties, so these numbers sum to eighteen rather than sixteen.)
+Finally, Table 15 shows the 95%-credible regions of the confusion matrix elements from
+MMSE testing. Every credible region contains the corresponding element in the ideal con-
+fusion matrix.
+62
+On Truthing Issues in Supervised Classification
+Estimation Method ACC
+Ideal (correct labels known) 0.7350
+MMSE testing: Estimate Conditional mean 0.7355
+conditional confusion MAP estimate 0.7355
+matrix via sampling 95%-credible region (0.7282, 0.7427)
+Estimate correct labels 0.7390
+Combine metrics from each Mean 0.6170
+labeler Median 0.6397
+Table 13: Estimated accuracy for 4-class classification example. Boldface indicates an es-
+timate that was closest to the ideal accuracy or a credible region that contained
+the ideal accuracy.
+Ideal (Correct) Predicted Label
+Labels Known) 0 1 2 3
+0 290 40 40 39
+Correct 1 58 391 68 68
+Label 2 8 10 168 27
+3 93 43 36 621
+MMSE Predicted Label Est. Correct Predicted Label
+Testing 0 1 2 3 Labels 0 1 2 3
+0 284.8 41.3 36.6 33.9 0 288 43 35 37
+Correct 1 63.7 391.7 67.0 67.6 Correct 1 61 395 70 68
+Label 2 7.5 7.3 169.8 29.0 Labels 2 7 4 170 25
+3 93.0 43.6 38.7 624.6 3 93 42 37 625
+Mean of Predicted Label Median of Predicted Label
+Labelers 0 1 2 3 Labelers 0 1 2 3
+0 238.9 60.7 65.3 54.2 0 254.1 57.4 46.8 56.2
+Correct 1 60.7 335.5 66.3 86.3 Correct 1 71.1 343.4 67.2 86.9
+Label 2 36.7 54.2 130.1 64.8 Label 2 26.1 35.9 145.9 62.3
+3 76.6 91.3 48.8 529.6 3 90.6 65.8 46.7 543.6
+Table 14: Ideal and estimated confusion matrices for 4-class classification example. Bold-
+face indicates that the element was closest to the corresponding element in the
+ideal confusion matrix.
+63
+Su
+95%-Credible Predicted Label
+Regions 0 1 2 3
+0 (277.72, 291.95) (35.80, 46.79) (32.27, 40.88) (28.54, 39.22)
+Correct 1 (57.75, 69.56) (384.72, 398.77) (61.51, 72.46) (60.74, 74.43)
+Label 2 ( 4.79, 10.23) (3.97, 10.67) (163.73, 175.83) (24.03, 33.93)
+3 (86.74, 99.25) (38.47, 48.82) (34.34, 42.99) (615.90, 633.21)
+Table 15: 95%-credible regions for individual elements of the confusion matrix estimated
+by MMSE testing (Algorithm 4) for 4-class classification example.
+5.4 Example of Training: Logistic Regression
+This section uses logistic regression to illustrate the training approaches in Section 3. We
+usetheIonospherebinary-classificationdatasetfromtheUCIMachineLearningRepository
+(seeDuaandGraff,2017),whichcontainsN = 351samples,eachconsistingof34real-valued
+features. Class 0 corresponds to a good radar return and class 1 to a bad radar return.
+Ionosphere contains 126 bad radar returns, so π(1) = 0.359. We employ 75%–25% stratified
+hold-out validation since multi-fold cross-validation produced cluttered plots that were too
+difficult to read. In practice, one could use cross-validation, of course.
+Training and testing were conducted for T = 1, 5, 9, and 13. The data set provides
+the correct labels; noisy labels were simulated as in Section 5.1.2; hence, the noisy-label
+RVs are conditionally independent as in (58), ψ = (δ ,φ ), and (27) reduces to (61).
+i,t i t
+The settings were δ ∼ Beta(1,5), ∀i; φ ∼ U(0,0.5), ∀t; η ≡ 1 to force the first labeler
+i t 1
+to label every sample; and η ∼ U(0.33,1), t ∈ T \{1}. The sample-difficulty realization
+t
+wasδ = (0.367,0.524,0.115,0.181,0.021,...,0.154),andthelabeler-fallibilityrealizationfor
+T = 13 was φ = (0.079, 0.440, 0.137, 0.207, 0.148, 0.314, 0.290, 0.300, 0.133, 0.142, 0.127,
+0.164, 0.072). For each value of T, z consisted of the noisy labels for labeler indexes 1
+through T. In fact, the introductory example in Table 1 is an excerpt of z for T = 5.
+We consider five classifiers. The ideal classifier performs conventional ML training with
+{x,y} and is included for reference. The ML-optimal classifier performs ML training given
+{x,z,ψ,π} according to part 1a of the unified view in Section 3.2, and primary term (32)
+fromSection3.3.1; detailsappearinAppendixF.1. Theresultingobjectivefunctionmayno
+longerbeconvex,butgradientdescentcanstillbeusedtofindalocaloptimum. TheMMSE-
+optimal classifier uses MMSE training according to part 2 of the unified view, primary
+term (40) from Section 3.4.1, and gradient components in (50) of Section 3.4.3; details are
+in Appendix F.2. The suboptimal, infrastructure-compatible label-estimation and voting
+classifiers described in Section 3.7 are also included. We omitted sample replication since
+it is essentially a quantized form of training with (32). For all classifier training, we used
+L regularization and the standard Broyden-Fletcher-Goldfarb-Shanno method.
+2
+All testing metrics were calculated using the empirical Bayes method of Algorithm 1,
+so, except for the ideal classifier, no correct labels were used during training or testing. Al-
+though training could be optimal or suboptimal, testing always applied the same technique.
+For each training method, the regularization weight λ was swept over {0.5,1.0,...,10.0},
+producing twenty trained models. For the ideal classifier, we selected the model with the
+64
+On Truthing Issues in Supervised Classification
+largest ideal area under the ROC curve on the held-out testing set. For the other classifiers,
+we estimated the ROC curve on the testing set (explained shortly in Section 5.4.2) and
+selected the model with the largest estimated area under the ROC curve.
+5.4.1 Fixed Decision Threshold
+A trained logistic regression model computes g˜(x;θ) ∈ [0,1] as its estimate of p(y|x;θ) and
+compares it against a threshold τ; the predicted label yˆ is 1 if g˜(x;θ) > τ and 0 otherwise.
+This section presents results for the single default threshold τ = 1/2.
+Figure 19 displays P-R analysis plots for the held-out testing set as T increases. For
+the classifiers trained with noisy labels, contours show the estimated joint posteriors of
+(PREC,REC),circlesshowtheconditionalmeans,andsolidlinesindicatethe95%-credible
+regions. Normally, the correct labels y would not be available, but since we have the luxury
+of knowing them, inverted triangles mark each classifier’s actual performance. The upright,
+solid black triangle shows the ideal classifier’s operating point, which is identical for all
+values of T.
+With T = 1, z conveys little information about y, so the posteriors are spread out,
+and the credible regions are quite large. For each training method, the conditional mean
+and actual operating point are not very close together, but the actual operating point lies
+within the credible region. The suboptimal methods outperform the MMSE-optimal and
+ML-optimal classifiers for this case, but the credible regions overlap so much that one could
+not make this conclusion without access to the correct labels. This plot also demonstrates
+that our training and testing approaches are applicable even for a single, imperfect labeler.
+When T = 5, more information about y is available from z, so the credible regions be-
+come smaller, and the conditional means become much closer to the actual operating points
+for all classifiers. The ML-optimal classifier outperforms the ones that used suboptimal
+training, and from the posteriors, one could reasonably expect it to do so. It also happens
+to outperform the ideal classifier. The MMSE-optimal classifier performs comparably to
+the label-estimation classifier.
+For T = 9, the training methods provide similar estimated precisions, with the ML-
+optimal classifier achieving greater recall. However, the posteriors overlap substantially, so
+one could not claim this without access to the correct labels. The ML-optimal classifier
+again slightly outperforms the ideal one. The MMSE-optimal and voting-trained classifier
+have identical performance.
+By the time T = 13, the posteriors and credible regions are much tighter, and the
+conditional means give quite accurate estimates of the actual operating points. The ML-
+optimal classifier and the classifier trained with label estimation slightly outperform voting
+training, and their actual operating points coincide with that of the ideal classifier. For
+this choice of the threshold τ, the MMSE-optimal classifier has the lowest recall. In the
+next sections, the threshold is varied, and the MMSE-optimal classifier is seen to have
+competitive performance.
+5.4.2 Performance Curves
+Itisalsocommonpracticetosweepthethresholdτ overitsrangeofpossiblevaluestoobtain
+ROC or P-R curves. Figure 20 displays estimated ROC curves, which are the conditional
+65
+On Truthing Issues in Supervised Classification
+means of (P ,P ) from MMSE testing using Algorithm 1, for the different training meth-
+D FA
+ods and numbers of labelers. The estimated performance improves as T increases, although
+it does not change much beyond T = 5. When T = 1, it is difficult to estimate perfor-
+mance, which results in the jagged estimated ROC curves. As T increases, the estimated
+ROC curves begin to display the stepwise shape of the ideal ROC curve.
+For each value of T, all of the training methods perform comparably. This behavior
+suggests that the regularized suboptimal training methods offer practical alternatives to
+training methods that are optimal according to the unified view. This observation dif-
+fers from the experiments on testing from Sections 5.2.1, 5.2.4, and 5.2.5, where MMSE
+testing (Algorithms 1 and 2) outperformed the method of estimating the correct labels
+(Algorithm 3). We posit that this difference reflects the inherently different goals of train-
+ing and testing and the presence or absence of regularization. The goal of training is to
+learn a predictive model that generalizes well to out-of-sample data beyond the training set
+{x,z,ψ,π}. Therefore, training includes regularization, which helps a suboptimal training
+method compensate for its inferior estimation ability. In contrast, the goal of testing is to
+obtain the in-sample metrics for the testing set {yˆ,z,ψ,π}. Regularization is not called
+for in this case, and MMSE testing can provide much better estimation performance over
+suboptimal testing methods.
+Figure 21 displays the actual ROC curves calculated against the correct labels. These
+curves would not be available in practice if truthing issues are present. They show that the
+training methods can achieve performance similar to the ideal case, and a comparison with
+Figure 20 shows that the estimated ROC curves are reasonably good even when T = 1, and
+they are very good for T = 9 or 13.
+5.4.3 Performance Curve Posteriors
+MMSE testing allows us to estimate the joint posterior of (P ,P ) or (PREC,REC). We
+D FA
+can average the posteriors over all threshold values to obtain the posterior of a ROC or
+P-R curve—an important capability when truthing issues are present. Figure 22 shows the
+posteriors of the ROC curves for the ML-optimal classifier as T varies. Posterior values
+over the range [10−3,104] are shown using heat maps with a base-10 logarithmic color scale.
+The figure also displays the estimated and actual ROC curves for this training method.
+We could also compute credible regions for the curves, but we do not show them to avoid
+cluttering the figure. Figure 19 already demonstrated the good containment of the credible
+regions.
+Similarly, Figure 23 shows P-R curve posteriors for the MMSE-optimal classifier. When
+τ > 1, the classifier predicts yˆ = 0, ∀i, so recall is zero but precision is undefined, and none
+i
+of the curves show a point when rec = 0.
+The figures also reveal another benefit of MMSE testing. Although actual performance
+is similar to the ideal case when T = 1 or 5, the estimated curves display some large
+deviations from the actual ones, and the posteriors have broad support, which indicates
+substantial uncertainty about performance. For T = 9 or 13, the estimated curves coincide
+closely with the actual ones, and the posteriors have more concentrated support, which
+reflects less uncertainty about performance. In the presence of truthing issues, the actual
+67
+On Truthing Issues in Supervised Classification
+than those for suboptimal methods like estimating the correct labels or averaging the
+metrics from individual labelers. For multi-class classification, MMSE testing outper-
+formed the suboptimal methods at estimating accuracy and individual elements of
+the confusion matrix.
+2. How can one train a classifier in the presence of truthing issues?
+With z, ψ, π, and the feature vectors x given, we presented a unified view of training
+that is elegant and intuitive. The unified view explains how to train a broad range
+of classifiers, and it organizes some of the related work. Each one of our training
+approaches is optimal: it employs an appropriate likelihood function, posterior, or
+estimator; it fully exploits the available information; and it optimizes a well-defined
+penalty or utility criterion. None of the approaches estimates the correct labels.
+For probabilistic (i.e., generative or discriminative) models with parameters θ, we
+showed that the optimization principle from ideal training can be retained. In ML
+training, the likelihood function p(y|x;θ) or p(y,x;θ) is replaced with p(z|x;ψ,θ)
+or p(z,x;ψ,θ), respectively. In MAP training, the posterior p(θ|y,x) is replaced
+by p(θ|z,x;ψ). For non-probabilistic models, we proposed MMSE training, which
+retains the original loss function and minimizes the in-sample MMSE estimate of the
+empirical-risk RV. Some related work has proposed the same form of training but
+did not use estimation theory to motivate it. We discussed properties of the MMSE
+estimator and provided a condition for when the MMSE estimator is a consistent
+estimator.
+Experiments using binary logistic regression demonstrated the effectiveness of our
+training approach, as well as the competitiveness of some suboptimal methods, like
+estimating the correct labels or voting among labelers, which are compatible with
+existing machine-learning infrastructure. We reasoned that regularization helps the
+suboptimal methods compensate for their estimation deficiencies. The experiments
+employed our testing methods, thus demonstrating the feasibility of training and test-
+ingwithnoisylabelsonly. Moreover,theyshowedthatourtestingmethodscanprovide
+approximate posteriors and optimal estimates of ROC and P-R curves.
+3. How can one compare different combinations of labelers with different abilities?
+The noisy-labeling process can be viewed as a broadcast channel, so mutual informa-
+tion quantifies the amount of information about the correct label conveyed by a group
+of labelers, and it facilitates comparison between different combinations of labelers.
+Asanotherbasisforcomparison, anycombinationoflabelerscanberepresentedasan
+equivalent single labeler with some corresponding error probability. This observation
+implies that multiple mediocre labelers can convey information greater than or equal
+to that from a single expert labeler.
+The preceding statement is theoretical; it does not explain how to extract this infor-
+mation in practice. Fortunately, our training and testing methods provide a way to
+do so. The work in this paper culminated in training and testing experiments that
+confirmed the implication and showed that our methods can realize its benefits.
+75
+Su
+6.2 Expanded Workflow
+Truthing issues are a reality in many applications. To address them, we advocate an ex-
+panded workflow that combines this work and the complementary related work. Training
+must learn two models: a noisy-label model and the desired predictive model. The models
+can be learned separately, using methods like those in Section 1.2.1 to learn the noisy-label
+model and then using the training techniques from Section 3 to learn the predictive model.
+Alternatively, the models can be learned jointly, using techniques like those by Raykar et al.
+(2010), Khetan et al. (2018), or Tanno et al. (2019). After both models have been learned,
+the predictive model can be tested using Algorithm 1, 2, or 4 from MMSE testing.
+6.3 Future Directions
+We close with a discussion of areas for future work.
+6.3.1 Directly-Related Topics
+A number of aspects of MMSE testing merit further study. First, Section 2.2 applied the
+CLTtothecommonRVsU andV,andsubsequentmanipulationsproducedtheapproximate
+posteriors of the metric RVs in Section 2.3; it would be useful to consider the case when one
+or both of the summations in (8) and (9) contain an insufficient number of terms to justify
+the CLT. Second, it would be fulfilling to obtain an expression for the joint posterior (17) of
+(P ,P ) along the chance line p = p . Third, closed-form expressions for the maximum
+D FA D FA
+of (17) and (18) would simplify MAP estimation of the ROC and P-R operating points.
+Fourth, Section 2.4.4 discussed convergence of the empirical Bayes methods, but more
+detailed study is called for. Finally, Section 2.7 examined multi-class classification, and it
+considered accuracy and individual elements of the confusion matrix. One could investigate
+other multi-class classification metrics, the joint distribution of the confusion matrix, the
+effect of a highly imbalanced class prior, and tactics when the number of classes is large.
+Regarding training of a probabilistic predictive model, Section 3.3 showed that ML or
+MAPtrainingcouldbemodifiedfornoisylabels. OnecouldapplytheformsgiveninTable9
+to adapt training from the ideal case to the case of truthing issues.
+For MMSE training of non-probabilistic predictive models, Section 3.4.3 explained that
+its gradient is amenable to automatic differentiation (cf. (50)), so it would be exciting to see
+MMSEtrainingappliedtodeepneuralnetworks. Section3.4.5consideredconsistencyofthe
+MMSEestimatoroftheempirical-riskRVandgavethesimplestofsufficientconditions. One
+could derive other conditions or bounds on the estimation error. One could also investigate
+conditions under which MMSE training preserves consistency of the ERM principle. The
+workofKhetanetal.(2018), Cid-Sueiro(2012), andCid-Sueiroetal.(2014)couldbeuseful
+in this regard.
+The information-theoretic view was illustrated with the BSBC in Section 4.1. One
+could examine an asymmetric channel (i.e., a channel with different miss and false-alarm
+probabilities), a channel with dependent labelers, or a multi-class channel.
+76
+On Truthing Issues in Supervised Classification
+6.3.2 Learning and Labeler Allocation
+This paper has assumed that the noisy-label model is known, but in many cases it must
+be learned. This requirement creates a variety of allocation problems. As an example of
+learning allocation, suppose that one has a small set {x(cid:48),y(cid:48),z(cid:48)} with both correct and noisy
+labelsandamuchlargerset{x,z}withonlynoisylabels. Howshouldonepartitionthesets
+for learning the noisy-label model, training the predictive model, and testing the learned
+predictive model?
+Twoexamplesoflabelerallocationfollow. Givenalabelingbudgetandcostsforlabelers
+with different abilities, what is the most cost-effective way to acquire labels?22 Similarly,
+given a set of samples with different labeling difficulties (e.g., images under a variety of
+lighting conditions), how should the labeling effort be distributed across the set?
+6.3.3 Extension to Weak Supervision
+The ideas in the related work and this paper could be adapted to other forms of supervised
+learning that involve noisy annotation, also known as weak supervision. Per Section 1.4, it
+would require three models: the usual predictive model, a noisy-annotation model for the
+imperfect annotation process, and a testing model that relates the predictions and noisy
+annotations. The noisy-annotation model is like the noisy-label model p(z|y)π(y) and pro-
+vides estimated probabilities. It should generalize to unseen, out-of-sample realizations of
+(Z,Y),soitwillbelearnedwithmachine-learningmethods. Thetestingmodelisanalogous
+to p(yˆ,z|y) = p(yˆ|y)p(z|y) in (7); it characterizes in-sample performance on the testing set,
+so it will be learned with estimation-theoretic methods.
+For training, many aspects of MMSE training are likely applicable to weak supervision.
+Section 3.4 and Appendix E.4 allow for a generic loss function and noisy-annotation model.
+If the annotation set Y is continuous rather than finite, then the summations over Y must
+be replaced by integrals (cf. (37), (40), (41), (43), (50)), and techniques for computing or
+approximating the integrals will be needed.
+For testing of the predictive model, work tailored to the particular metrics will be
+required; the MMSE testing approach can provide a general strategy. Testing should follow
+the principle of estimating the in-sample metric RV rather than the correct annotation.
+First, one should identify a suitable testing model and parameters23 (cf. Section 2.1) and
+express the metrics as RVs (Section 2.2). Second, one should obtain the posteriors of
+the parameters and metric RVs (Section 2.3); if the samples are independent, then the
+CLT may be helpful. Third, one should develop algorithms for estimating the parameters
+(Section2.4). Finally,oncetheparametershavebeenestimated,theposteriorsofthemetric
+RVs can be used to find optimal estimates of the metrics (Section 2.5).
+Acknowledgments
+22. See Sheng et al. (2008), for example.
+23. Forbinaryclassification,theOPparameters(p˜ ,p˜ )correspondedtoprobabilityofdetectionandprob-
+D FA
+abilityoffalsealarm,whicharestandardmetrics,butmulti-classclassificationintroducedtheconditional
+confusion matrix, which is not commonly used.
+77
+Su
+Symbol P , REC P F
+D FA β
+Z(cid:48) U (Nˆ /N)−U (1+β2)U
+1
+W(cid:48) U +V 1−(U +V) β2(U +V)+Nˆ /N
+1
+µ µ (Nˆ /N)−µ (1+β2)µ
+Z(cid:48) U 1 U U
+σ2 σ2 σ2 (1+β2)2σ2
+Z(cid:48) U U U
+µ µ +µ 1−(µ +µ ) β2(µ +µ )+Nˆ /N
+W(cid:48) U V U V U V 1
+σ2 σ2 +σ2 σ2 +σ2 β4(σ2 +σ2)
+W(cid:48) U V U V U V
+cov(Z(cid:48),W(cid:48)) σ2 σ2 β2(1+β2)σ2
+U U U
+ρ √ σU √ σU √ σU
+σ2+σ2 σ2+σ2 σ2+σ2
+U V U V U V
+Table 16: Parameters for scalar metric RVs with posteriors equal to the ratio Z(cid:48)/W(cid:48) of
+jointly approximately normal RVs Z(cid:48) and W(cid:48).
+3. It follows that Z(cid:48)/W(cid:48) = T(cid:48)/r+s, so p (ζ) = |r|·p (r(ζ −s)).
+Z(cid:48)/W(cid:48) T(cid:48)
+The density p(t(cid:48)) includes the standard Cauchy density 1/ (cid:0) π(1+t(cid:48)2) (cid:1) , so technically,
+the moments of T(cid:48) of order greater than zero do not exist; i.e., (cid:82)∞ t(cid:48)ip(t(cid:48))dt(cid:48) is infinite
+−∞
+for i ∈ {1,2,...}. However, Marsaglia (2006, §4) points out that, in practice, one might
+be able to assume that the denominator b+Y(cid:48) approaches zero with negligible probability,
+enabling one to compute the moments (conditioned on this assumption).
+For example, if b = 4, then Pr(b+Y(cid:48) ≤ 0) = Pr(Y(cid:48) ≤ −4) ≈ 3.17×10−5. Marsaglia
+reports that, conditioned on b > 4 (or Y(cid:48) > −4), the mean and variance of T(cid:48) are approxi-
+mately µ = a/(1.01b−0.2713) and σ2 = (a2+1)/(b2+0.108b−3.795)−µ2 .
+T(cid:48) T(cid:48) T(cid:48)
+Finally, Marsaglia also observes that, if a < 2.256 and b > 4, then T(cid:48) can be reasonably
+approximated by a normal distribution.
+Appendix C. Review of MMSE Estimation
+(cid:2) (cid:3)T
+LetAbetheunobservedRV,B betheobservedRV,andletf(A) = f (A) ··· f (A)
+1 D
+be a D-dimensional vector of scalar functions of A, with E[f2(A)] < ∞, j = 1, ..., D.
+j
+(cid:2) (cid:3)T
+Define an estimator of f(A) from B as h(B) = h (B) ··· h (B) , and define the
+1 D
+MSE of h(B) by mse
+(cid:0)
+h(B),f(A)
+(cid:1)
+=
+(cid:80)D
+E
+(cid:2)(cid:0)
+h (B)−f (A)
+(cid:1)2(cid:3)
+. The goal is to find the
+j=1 j j
+MMSE estimator hMMSE = argmin mse (cid:0) h(B),f(A) (cid:1) .
+h
+For Section 2.4.1, A = (P ,P ), B = (Yˆ,Z), and f(A) is the identity function
+D FA
+f(A) ≡ A. The estimators are h (B) = h (cid:0) Yˆ,Z,ψ,p˜ (j−1) ,p˜ (j−1)(cid:1) and h (B) = h (cid:0) Yˆ,
+1 D D FA 2 FA
+(j−1) (j−1)(cid:1) (j−1) (j−1)
+Z,ψ,p˜ ,p˜ , where ψ, p˜ , and p˜ are non-random parameters. In Sec-
+D FA D FA
+tion2.6.2onfullyBayesianestimationofametricRVlikeaccuracy,A = ACC,B = (Yˆ,Z),
+f(A) is the identity function, and ψ is a non-random parameter. For estimation of
+the empirical-risk RV in Section 3.4.1 and Appendix E.4, A = Y, B = Z, f(A) =
+J (θ;x,Y) = J(Y), and an estimator is h(B) = Jˆ(θ;x,Z,ψ,π) = Jˆ(Z). For estimating
+pri
+80
+On Truthing Issues in Supervised Classification
+Jesu´s Cid-Sueiro. Proper losses for learning from partial labels. In Neural Information
+ProcessingSystems(NeurIPS),pages1565–1573.CurranAssociates,Inc.,December2012.
+URL https://dl.acm.org/doi/10.5555/2999134.2999309.
+Jesu´sCid-Sueiro,Dar´ıoGarc´ıa-Garc´ıa,andRau´lSantos-Rodr´ıguez.Consistencyoflossesfor
+learning from weak labels. In Machine Learning and Knowledge Discovery in Databases,
+volume 8724 of Lecture Notes in Computer Science, pages 197–210. Springer, 2014. doi:
+10.1007/978-3-662-44848-9 13.
+Thomas M. Cover and Joy A. Thomas. Elements of Information Theory. John Wiley &
+Sons, New York, NY, USA, 1st edition, 1991. doi for 2nd edition: 10.1002/047174882X.
+A. Philip Dawid and Allan M. Skene. Maximum likelihood estimation of observer error-
+rates using the EM algorithm. Journal of the Royal Statistical Society. Series C (Applied
+Statistics), 28(1):20–28, 1979. doi: 10.2307/2346806.
+Arthur P. Dempster, Nan M. Laird, and Donald B. Rubin. Maximum likelihood estimation
+from incomplete data via the EM algorithm. Journal of the Royal Statistical Society.
+Series B (Methodological), 39(1):1–38, 1977. URL https://www.jstor.org/stable/
+2984875.
+Pinar Donmez, Guy Lebanon, and Krishnakumar Balasubramanian. Unsupervised super-
+vised learning I: Estimating classification and regression errors without labels. J. Ma-
+chine Learning Research (JMLR), 11(44):1323–1351, April 2010. URL https://www.
+jmlr.org/papers/v11/donmez10a.html.
+Dheeru Dua and Casey Graff. UCI machine learning repository. URL https://archive.
+ics.uci.edu/ml, 2017. URL visited Feb. 1, 2017.
+Mark Everingham et al. The 2005 PASCAL visual object classes challenge. In Machine
+Learning Challenges Workshop (MLCW), volume 3944 of Lecture Notes in Computer
+Science, pages 117–176. Springer, 2006. doi: 10.1007/11736790 8.
+Benoˆıt Fr´enay and Michel Verleysen. Classification in the presence of label noise: A survey.
+IEEE Trans. Neural Networks and Learning Systems, 25(5):845–869, 2014. doi: 10.1109/
+TNNLS.2013.2292894.
+YoavFreundand Robert E.Schapire. Adecision-theoreticgeneralization ofon-line learning
+andanapplicationtoboosting. J. Computer and System Sciences,55(1):119–139,August
+1997. doi: 10.1006/jcss.1997.1504.
+AndrewGelman,JohnB.Carlin,HalS.Stern,DavidB.Dunson,AkiVehtari,andDonaldB.
+Rubin. Bayesian Data Analysis. Chapman and Hall-CRC, Boca Raton, FL, USA, 3rd
+edition, 2013. doi: 10.1201/b16018.
+John T. Holodnak, Jason T. Matterer, and William W. Streilein. Estimating classifier
+accuracy using noisy expert labels. Technical Report 1225, MIT Lincoln Laboratory,
+Lexington, MA, USA, January 2018.
+87
+On Truthing Issues in Supervised Classification
+Andrew Y. Ng and Michael I. Jordan. On discriminative vs. generative classifiers: A com-
+parison of logistic regression and naive Bayes. In Neural Information Processing Systems
+(NeurIPS), pages 841–848. MIT Press, January 2001. URL https://dl.acm.org/doi/
+10.5555/2980539.2980648.
+Curtis Northcutt, Lu Jiang, and Isaac Chuang. Confident learning: Estimating uncertainty
+in dataset labels. J. Artificial Intelligence Research (JAIR), 70:1373––1411, May 2021a.
+ISSN 1076-9757. URL https://doi.org/10.1613/jair.1.12125.
+Curtis G. Northcutt, Anish Athalye, and Jonas Mueller. Pervasive label errors in test
+sets destabilize machine learning benchmarks. In Neural Information Processing Systems
+(NeurIPS)TrackonDatasetsandBenchmarks.CurranAssociates,Inc.,December2021b.
+URL https://doi.org/10.48550/arXiv.2103.14749.
+Alan V. Oppenheim and George C. Verghese. Signals, Systems and Inference. Pearson
+Education, London, UK, 2015.
+Athanasios Papoulis. Probability, Random Variables, and Stochastic Processes. McGraw-
+Hill, New York, NY, USA, 3rd edition, 1991.
+Emmanouil A. Platanios, Avinava Dubey, and Tom Mitchell. Estimating accuracy from
+unlabeled data: A Bayesian approach. In Intl. Conf. Machine Learning (ICML), pages
+1416–1425, June 2016. URL https://proceedings.mlr.press/v48/platanios16.pdf.
+Alexander Ratner, Stephen Bach, Henry Ehrenberg, Jason Fries, Sen Wu, and Christopher
+R´e. Snorkel: Rapid training data creation with weak supervision. In Intl. Conf. Very
+Large Data Bases (VLBD), volume 11(3), pages 269–282. VLDB Endowment, November
+2017. doi: 10.14778/3157794.3157797.
+Alexander J. Ratner, Christopher M. De Sa, Sen Wu, Daniel Selsam, and Christopher
+R´e. Data programming: Creating large training sets, quickly. In Neural Information
+ProcessingSystems(NeurIPS),pages3567–3575.CurranAssociates,Inc.,December2016.
+URL https://dl.acm.org/doi/10.5555/3157382.3157497.
+Vikas C. Raykar, Shipeng Yu, Linda H. Zhao, Gerado Hemosillo Valadez, Charles Florin,
+Luca Bogoni, and Linda Moy. Learning from crowds. J. Machine Learning Research
+(JMLR), 11(43):1297–1322, April 2010. URL https://jmlr.csail.mit.edu/papers/
+v11/raykar10a.html.
+Takaya Saito and Marc Rehmsmeier. The precision-recall plot is more informative than the
+ROC plot when evaluating binary classifiers on imbalanced datasets. Public Library of
+Science (PLOS) ONE, 10(3):1–21, March 2015. doi: 10.1371/journal.pone.0118432.
+Robert E. Schapire. The strength of weak learnability. Machine Learning, 5:197–227, June
+1990. doi: 10.1007/BF00116037.
+Victor S. Sheng, Foster Provost, and Panagiotis G. Ipeirotis. Get another label? Im-
+proving data quality and data mining using multiple, noisy labelers. In ACM Intl.
+Conf. Knowledge Discovery and Data Mining (SIGKDD), pages 614—-622, 2008. doi:
+10.1145/1401890.1401965.
+89
